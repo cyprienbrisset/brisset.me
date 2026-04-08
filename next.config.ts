@@ -11,6 +11,10 @@ const config: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "raw.githubusercontent.com" },
     ],
+    // SVGs from GitHub need this — they're trusted (our own org repos)
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   experimental: {
     optimizePackageImports: ["@react-three/drei", "@react-three/fiber"],

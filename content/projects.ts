@@ -82,39 +82,43 @@ export const projects: Project[] = [
     ],
   },
   {
-    slug: "mgq",
+    slug: "math-gatcha-quest",
     name: "Math Gatcha Quest",
-    tagline: "Jeu éducatif de mathématiques avec mécaniques gatcha — 100+ niveaux, 50+ personnages à collectionner.",
+    tagline:
+      "Jeu éducatif de mathématiques avec mécaniques gacha — révise tes maths, débloque des personnages, deviens le maître des chiffres.",
     category: "game",
     version: "1.0.0",
     status: "active",
-    stack: ["typescript", "next.js", "tailwind", "postgres"],
+    stack: ["next.js", "typescript", "prisma", "tailwind", "electron"],
     links: {
-      // TODO: remplacer par l'URL réelle du repo
-      github: "https://github.com/cyprienbrisset/mgq",
+      github: "https://github.com/cyprienbrisset/math-gatcha-quest",
     },
-    // TODO: remplacer par une vraie capture d'écran
-    cover: "/projects/mgq-cover.png",
+    cover: "https://raw.githubusercontent.com/cyprienbrisset/math-gatcha-quest/main/public/logo.png",
     screenshots: [
-      { url: "/projects/mgq-cover.png", alt: "Math Gatcha Quest — écran principal" },
+      {
+        url: "https://raw.githubusercontent.com/cyprienbrisset/math-gatcha-quest/main/public/logo.png",
+        alt: "Math Gatcha Quest — logo",
+      },
     ],
   },
   {
     slug: "hoofs",
     name: "Hoofs",
-    tagline: "Système d'alertes pour concours équestres — notifications push temps réel et suivi de performances.",
+    tagline:
+      "Surveillance d'ouverture des concours équestres FFE — alertes Telegram instantanées dès qu'une course ouvre ses engagements.",
     category: "web",
-    version: "1.2.0",
+    version: "1.0.0",
     status: "active",
-    stack: ["next.js", "typescript", "postgres", "expo"],
+    stack: ["python", "playwright", "telegram", "chrome-extension"],
     links: {
-      // TODO: remplacer par l'URL réelle du repo
-      github: "https://github.com/cyprienbrisset/hoofs",
+      github: "https://github.com/cyprienbrisset/FFEMonitor",
     },
-    // TODO: remplacer par une vraie capture d'écran
-    cover: "/projects/hoofs-cover.png",
+    cover: "https://raw.githubusercontent.com/cyprienbrisset/FFEMonitor/main/frontend/logo.svg",
     screenshots: [
-      { url: "/projects/hoofs-cover.png", alt: "Hoofs — alertes concours" },
+      {
+        url: "https://raw.githubusercontent.com/cyprienbrisset/FFEMonitor/main/frontend/logo.svg",
+        alt: "Hoofs — FFEMonitor logo",
+      },
     ],
   },
 ];
