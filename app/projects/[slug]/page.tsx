@@ -45,7 +45,13 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
 
           <div className="flex items-center gap-3 mb-6">
             <span className="text-xs font-mono text-accent tracking-widest uppercase">
-              {project.category === "desktop" ? "Application desktop" : project.category === "web" ? "Application web" : "Application mobile"}
+              {project.category === "desktop"
+                ? "Application desktop"
+                : project.category === "web"
+                ? "Application web"
+                : project.category === "mobile"
+                ? "Application mobile"
+                : "Jeu"}
             </span>
             <span className="w-1 h-1 rounded-full bg-ink-muted" />
             <span className="text-xs font-mono text-ink-muted">v{project.version}</span>

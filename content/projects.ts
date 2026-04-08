@@ -3,7 +3,7 @@
  * Adding a new project = one entry here + one app/projects/[slug]/page.tsx file.
  */
 
-export type ProjectCategory = "desktop" | "web" | "mobile";
+export type ProjectCategory = "desktop" | "web" | "mobile" | "game";
 
 export type Project = {
   slug: string;
@@ -79,6 +79,42 @@ export const projects: Project[] = [
       { url: "https://raw.githubusercontent.com/Alchim-IA/pulsion/master/public/screenshots/dashboard.png",    alt: "Pulsion — tableau de bord" },
       { url: "https://raw.githubusercontent.com/Alchim-IA/pulsion/master/public/screenshots/ai-assistant.png", alt: "Pulsion — assistant IA" },
       { url: "https://raw.githubusercontent.com/Alchim-IA/pulsion/master/public/screenshots/settings.png",     alt: "Pulsion — réglages" },
+    ],
+  },
+  {
+    slug: "mgq",
+    name: "Math Gatcha Quest",
+    tagline: "Jeu éducatif de mathématiques avec mécaniques gatcha — 100+ niveaux, 50+ personnages à collectionner.",
+    category: "game",
+    version: "1.0.0",
+    status: "active",
+    stack: ["typescript", "next.js", "tailwind", "postgres"],
+    links: {
+      // TODO: remplacer par l'URL réelle du repo
+      github: "https://github.com/cyprienbrisset/mgq",
+    },
+    // TODO: remplacer par une vraie capture d'écran
+    cover: "/projects/mgq-cover.png",
+    screenshots: [
+      { url: "/projects/mgq-cover.png", alt: "Math Gatcha Quest — écran principal" },
+    ],
+  },
+  {
+    slug: "hoofs",
+    name: "Hoofs",
+    tagline: "Système d'alertes pour concours équestres — notifications push temps réel et suivi de performances.",
+    category: "web",
+    version: "1.2.0",
+    status: "active",
+    stack: ["next.js", "typescript", "postgres", "expo"],
+    links: {
+      // TODO: remplacer par l'URL réelle du repo
+      github: "https://github.com/cyprienbrisset/hoofs",
+    },
+    // TODO: remplacer par une vraie capture d'écran
+    cover: "/projects/hoofs-cover.png",
+    screenshots: [
+      { url: "/projects/hoofs-cover.png", alt: "Hoofs — alertes concours" },
     ],
   },
 ];
