@@ -3,15 +3,15 @@
 import { useEffect } from "react";
 
 /**
- * Single rAF loop that drives:
- *   - Parallax transforms on jungle layers and all .vine elements
- *   - The mini scroll-snake sidebar's vertical position
+ * Drives parallax transforms (jungle layers + .vine elements) and the
+ * mini scroll-snake sidebar position from window.scrollY.
  *
- * Implementation notes:
- *   - One rAF instance per page mount; cleaned up on unmount.
- *   - DOM writes only happen when window.scrollY actually changed (delta dirty-check)
- *     so static frames are zero-cost.
- *   - All transforms use translate3d() for GPU compositing.
+ * Performance:
+ *   - No perpetual rAF: we listen to scroll events (passive) and request a
+ *     single frame to coalesce the work.
+ *   - When the user is idle, zero CPU is spent.
+ *   - Layer/vine list is built once at mount; transforms use translate3d
+ *     so the compositor handles them on GPU.
  */
 export function ScrollScene() {
   useEffect(() => {
@@ -36,36 +36,44 @@ export function ScrollScene() {
       });
     });
 
-    let lastScrollY = window.scrollY;
-    let rafId = 0;
+    let pending = false;
 
-    function tick() {
-      const curY  = window.scrollY;
-      const delta = curY - lastScrollY;
-      lastScrollY = curY;
+    function update() {
+      pending = false;
+      const curY = window.scrollY;
 
-      if (delta !== 0) {
-        for (let i = 0; i < layers.length; i++) {
-          const l = layers[i];
-          const y = (-curY * l.speed).toFixed(1);
-          l.el.style.transform = l.mirror
-            ? `translate3d(0, ${y}px, 0) scaleX(-1)`
-            : `translate3d(0, ${y}px, 0)`;
-        }
-
-        if (scrollSnake && snakeBar) {
-          const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-          const progress  = maxScroll > 0 ? curY / maxScroll : 0;
-          const trackH    = snakeBar.clientHeight - 56;
-          scrollSnake.style.transform = `translate(-50%, ${(progress * trackH).toFixed(1)}px)`;
-        }
+      for (let i = 0; i < layers.length; i++) {
+        const l = layers[i];
+        const y = (-curY * l.speed).toFixed(1);
+        l.el.style.transform = l.mirror
+          ? `translate3d(0, ${y}px, 0) scaleX(-1)`
+          : `translate3d(0, ${y}px, 0)`;
       }
 
-      rafId = requestAnimationFrame(tick);
+      if (scrollSnake && snakeBar) {
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        const progress  = maxScroll > 0 ? curY / maxScroll : 0;
+        const trackH    = snakeBar.clientHeight - 56;
+        scrollSnake.style.transform = `translate(-50%, ${(progress * trackH).toFixed(1)}px)`;
+      }
     }
 
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
+    function onScroll() {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(update);
+    }
+
+    // Initial paint to position everything from current scrollY
+    update();
+
+    window.addEventListener("scroll",  onScroll, { passive: true });
+    window.addEventListener("resize",  onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
   }, []);
 
   return null;

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { projects, getProject } from "@/content/projects";
 import { Footer } from "@/components/Footer";
 
@@ -104,8 +105,15 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
       <section className="relative -mt-8 section-veil pb-20">
         <div className="max-w-6xl mx-auto px-6">
           <figure className="screen-frame">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={project.cover} alt={`${project.name} — aperçu`} className="block w-full h-auto" />
+            <Image
+              src={project.cover}
+              alt={`${project.name} — aperçu`}
+              width={1920}
+              height={1080}
+              className="block w-full h-auto"
+              priority
+              sizes="(max-width: 1280px) 100vw, 1280px"
+            />
           </figure>
         </div>
       </section>
@@ -121,8 +129,15 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
             <div className="grid md:grid-cols-2 gap-6">
               {project.screenshots.slice(1).map((shot) => (
                 <figure key={shot.url} className="screen-frame">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={shot.url} alt={shot.alt} className="block w-full h-auto" loading="lazy" />
+                  <Image
+                    src={shot.url}
+                    alt={shot.alt}
+                    width={1280}
+                    height={800}
+                    className="block w-full h-auto"
+                    loading="lazy"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                  />
                 </figure>
               ))}
             </div>
