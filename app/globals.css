@@ -1,0 +1,355 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Design tokens — Ouroboros DNA
+   ============================================================ */
+@theme {
+  --color-bg:           #081A0E;
+  --color-bg-alt:       #0E2615;
+  --color-bg-elev:      #152E1C;
+  --color-ink:          #E8EDE4;
+  --color-ink-muted:    #8A9588;
+  --color-line:         rgba(232, 237, 228, 0.08);
+  --color-accent:       #4ADE80;
+  --color-accent-deep:  #16A34A;
+  --color-accent-soft:  rgba(74, 222, 128, 0.08);
+  --color-accent-glow:  rgba(74, 222, 128, 0.20);
+
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans:    "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, monospace;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar { display: none; }
+
+body {
+  background: #050f08;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display { font-family: var(--font-display); font-optical-sizing: auto; font-variation-settings: "opsz" 144; }
+.font-mono    { font-family: var(--font-mono); }
+
+/* Grain overlay */
+body::before {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none; z-index: 100;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+  opacity: 0.03;
+  mix-blend-mode: overlay;
+}
+
+section[id] { scroll-margin-top: 80px; }
+
+/* ============================================================
+   Jungle parallax layers
+   ============================================================ */
+.jungle-layer {
+  position: fixed;
+  left: 0; right: 0;
+  pointer-events: none;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  background-size: cover;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+}
+.jungle-far  { top: -15vh; height: 130vh; z-index: -3; background-color: #050f08; opacity: 0.75; }
+.jungle-mid  { top: -20vh; height: 140vh; z-index: -2; background-image: url('/jungle-bg.svg'); }
+.jungle-near { top: -5vh;  height: 150vh; z-index: -1; }
+.jungle-overlay {
+  position: fixed; inset: 0; z-index: -1;
+  background: linear-gradient(to bottom, rgba(5,15,8,0) 0%, rgba(5,15,8,0.45) 50%, rgba(5,15,8,0.85) 100%);
+  pointer-events: none;
+}
+
+.section-veil      { position: relative; z-index: 10; background: rgba(5,15,8,0.88); }
+.section-veil-tint { position: relative; z-index: 10; background: rgba(14,38,21,0.84); }
+
+/* ============================================================
+   Vines
+   ============================================================ */
+.vine {
+  position: fixed;
+  top: -10vh;
+  width: 110px;
+  height: 130vh;
+  pointer-events: none;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+.vine svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.vine-left  { left: 0; }
+.vine-right { right: 0; }
+.vine-mirror { transform: translate3d(0, 0, 0) scaleX(-1); }
+.vine-thin  { width: 58px; opacity: 0.85; }
+.vine-outer { width: 80px; opacity: 0.6; }
+.vine-pendant { top: 0; height: 75vh; }
+@media (max-width: 1100px) { .vine-outer { display: none; } }
+@media (max-width: 900px)  { .vine-thin, .vine-pendant { display: none; } }
+@media (max-width: 600px)  { .vine { display: none; } }
+
+/* ============================================================
+   Logo spin (header)
+   ============================================================ */
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+.spin-slow { animation: spin-slow 90s linear infinite; transform-origin: center; }
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+.btn-primary {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.6rem;
+  border-radius: 9999px;
+  background: rgba(74, 222, 128, 0.10);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  color: var(--color-ink);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: transform 150ms ease-out, background 200ms, border-color 200ms;
+}
+.btn-primary:hover  { background: rgba(74, 222, 128, 0.18); border-color: rgba(74, 222, 128, 0.6); }
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary::before {
+  content: ""; position: absolute; inset: -4px; border-radius: 9999px;
+  border: 1px solid rgba(74, 222, 128, 0.18); pointer-events: none;
+}
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.85rem 1.2rem; color: var(--color-ink-muted);
+  font-size: 0.95rem; transition: color 200ms;
+}
+.btn-ghost:hover { color: var(--color-ink); }
+
+/* ============================================================
+   Hero 3D snake — text contrast veil + word reveal
+   ============================================================ */
+.hero-text-veil { position: relative; }
+.hero-text-veil::before {
+  content: "";
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 140%; height: 200%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    ellipse 55% 50% at center,
+    rgba(5,15,8,0.88) 0%,
+    rgba(5,15,8,0.72) 35%,
+    rgba(5,15,8,0.35) 65%,
+    rgba(5,15,8,0) 85%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+.hero-text-veil h1,
+.hero-text-veil p {
+  text-shadow: 0 2px 20px rgba(0,0,0,0.85), 0 0 40px rgba(0,0,0,0.6);
+}
+
+@keyframes word-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.word { display: inline-block; opacity: 0; animation: word-in 700ms var(--ease-out-quart) forwards; }
+.word:nth-child(1){animation-delay:.05s}
+.word:nth-child(2){animation-delay:.12s}
+.word:nth-child(3){animation-delay:.19s}
+.word:nth-child(4){animation-delay:.26s}
+.word:nth-child(5){animation-delay:.33s}
+.word:nth-child(6){animation-delay:.40s}
+.word:nth-child(7){animation-delay:.47s}
+
+/* ============================================================
+   3D snake hero canvas
+   ============================================================ */
+.hero-bg { position: absolute; inset: 0; overflow: hidden; z-index: 0; }
+.hero-bg::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(5,15,8,0.85) 100%);
+  pointer-events: none;
+}
+.hero-canvas { display: block; width: 100%; height: 100%; }
+
+/* ============================================================
+   Mini scroll-snake sidebar
+   ============================================================ */
+.scroll-snake {
+  position: fixed;
+  right: 24px;
+  top: 100px;
+  bottom: 100px;
+  width: 28px;
+  z-index: 40;
+  pointer-events: none;
+}
+.scroll-snake__track {
+  position: absolute;
+  left: 50%; top: 0; bottom: 0; width: 1px;
+  background: linear-gradient(to bottom, transparent, rgba(232,237,228,0.12) 12%, rgba(232,237,228,0.12) 88%, transparent);
+  transform: translateX(-50%);
+}
+.scroll-snake__body {
+  position: absolute;
+  left: 50%; top: 0;
+  width: 20px; height: 56px;
+  transform: translate(-50%, 0);
+  color: var(--color-accent);
+  will-change: transform;
+}
+.scroll-snake__body svg {
+  display: block; width: 100%; height: 100%;
+  filter: drop-shadow(0 0 8px rgba(74,222,128,0.55));
+}
+
+/* ============================================================
+   Hexagonal scale grid (stack section)
+   ============================================================ */
+.scale-grid { display: flex; flex-direction: column; align-items: center; }
+.scale-row {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: -32px;
+}
+.scale-row:first-child { margin-top: 0; }
+.scale {
+  position: relative;
+  width: 160px;
+  height: 184px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  transition: transform 240ms var(--ease-out-quart);
+}
+.scale svg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  fill: rgba(14,38,21,0.78);
+  stroke: rgba(74,222,128,0.35);
+  stroke-width: 1.4;
+  transition: fill 240ms, stroke 240ms, filter 240ms;
+}
+.scale:hover { transform: translateY(-6px); z-index: 5; }
+.scale:hover svg {
+  fill: rgba(22,66,36,0.9);
+  stroke: rgba(74,222,128,0.85);
+  filter: drop-shadow(0 0 14px rgba(74,222,128,0.35));
+}
+.scale-content { position: relative; z-index: 2; text-align: center; padding: 0 12px; }
+.scale-name {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--color-ink);
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+.scale-tag {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.scale[data-category="lang"]      svg { fill: rgba(14,38,21,0.78); }
+.scale[data-category="framework"] svg { fill: rgba(18,44,26,0.82); }
+.scale[data-category="data"]      svg { fill: rgba(14,34,20,0.80); }
+.scale[data-category="ai"]        svg { fill: rgba(20,50,30,0.85); stroke: rgba(74,222,128,0.5); }
+.scale[data-category="ops"]       svg { fill: rgba(14,30,18,0.78); }
+
+@media (max-width: 900px) {
+  .scale { width: 120px; height: 138px; }
+  .scale-row { gap: 14px; margin-top: -24px; }
+  .scale-name { font-size: 0.9rem; }
+  .scale-tag  { font-size: 0.55rem; }
+}
+@media (max-width: 600px) {
+  .scale { width: 90px; height: 104px; }
+  .scale-row { gap: 10px; margin-top: -18px; }
+  .scale-name { font-size: 0.72rem; }
+  .scale-tag  { font-size: 0.5rem; }
+}
+
+/* ============================================================
+   Project pages — screen frame & utilities
+   ============================================================ */
+.screen-frame {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(74,222,128,0.22);
+  background: #0a1f13;
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(74,222,128,0.08) inset;
+}
+.feature-card { transition: border-color 300ms, transform 250ms; }
+.feature-card:hover { border-color: rgba(74,222,128,0.45); transform: translateY(-3px); }
+.metric-num {
+  font-family: var(--font-display);
+  font-size: 4rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--color-accent);
+  font-variation-settings: "opsz" 144;
+}
+
+/* ============================================================
+   Legal page typography
+   ============================================================ */
+.legal-content h2 {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: var(--color-ink);
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+  scroll-margin-top: 100px;
+}
+.legal-content h3 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--color-ink);
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.legal-content p { color: var(--color-ink-muted); line-height: 1.7; margin-bottom: 1rem; }
+.legal-content a { color: var(--color-accent); border-bottom: 1px solid rgba(74,222,128,0.3); transition: border-color 200ms; }
+.legal-content a:hover { border-color: var(--color-accent); }
+.legal-content strong { color: var(--color-ink); font-weight: 500; }
+.legal-content ul { color: var(--color-ink-muted); padding-left: 1.2rem; margin-bottom: 1rem; }
+.legal-content li { line-height: 1.7; margin-bottom: 0.4rem; list-style: none; position: relative; }
+.legal-content li::before {
+  content: "—";
+  position: absolute;
+  left: -1.2rem;
+  color: var(--color-accent);
+}
+.toc { position: sticky; top: 100px; }
+.toc a {
+  display: block;
+  padding: 0.4rem 0;
+  color: var(--color-ink-muted);
+  font-size: 0.85rem;
+  border-left: 1px solid rgba(232,237,228,0.08);
+  padding-left: 0.75rem;
+  transition: color 200ms, border-color 200ms;
+}
+.toc a:hover { color: var(--color-ink); border-left-color: var(--color-accent); }

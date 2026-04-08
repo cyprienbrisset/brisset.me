@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Cyprien Brisset — ouroboros low-poly">
+  <title>Cyprien Brisset</title>
+
+  <!-- ========== BODY RING — 16 faceted segments ========== -->
+  <g stroke="#051208" stroke-width="0.8" stroke-linejoin="round">
+    <polygon points="185,100 178.5,132.6 150.8,121.1 155,100" fill="#2f7a3e"/>
+    <polygon points="178.5,132.6 160.1,160.1 138.9,138.9 150.8,121.1" fill="#1e4f29"/>
+    <polygon points="160.1,160.1 132.6,178.5 121.1,150.8 138.9,138.9" fill="#3f8c4f"/>
+    <polygon points="132.6,178.5 100,185 100,155 121.1,150.8" fill="#17401f"/>
+    <polygon points="100,185 67.4,178.5 78.9,150.8 100,155" fill="#4ea558"/>
+    <polygon points="67.4,178.5 39.9,160.1 61.1,138.9 78.9,150.8" fill="#2f7a3e"/>
+    <polygon points="39.9,160.1 21.5,132.6 49.2,121.1 61.1,138.9" fill="#1e4f29"/>
+    <polygon points="21.5,132.6 15,100 45,100 49.2,121.1" fill="#3f8c4f"/>
+    <polygon points="15,100 21.5,67.4 49.2,78.9 45,100" fill="#17401f"/>
+    <polygon points="21.5,67.4 39.9,39.9 61.1,61.1 49.2,78.9" fill="#4ea558"/>
+    <polygon points="39.9,39.9 67.4,21.5 78.9,49.2 61.1,61.1" fill="#2f7a3e"/>
+    <polygon points="67.4,21.5 100,15 100,45 78.9,49.2" fill="#1e4f29"/>
+    <polygon points="100,15 132.6,21.5 121.1,49.2 100,45" fill="#3f8c4f"/>
+    <polygon points="132.6,21.5 160.1,39.9 138.9,61.1 121.1,49.2" fill="#17401f"/>
+    <polygon points="160.1,39.9 178.5,67.4 150.8,78.9 138.9,61.1" fill="#4ea558"/>
+    <polygon points="178.5,67.4 185,100 155,100 150.8,78.9" fill="#2f7a3e"/>
+  </g>
+
+  <!-- ========== DRAGON HEAD — low-poly overlay biting the tail ========== -->
+  <g stroke="#051208" stroke-width="0.7" stroke-linejoin="round">
+    <!-- Crown / top of skull -->
+    <polygon points="88,8 108,0 128,6 122,22 100,20" fill="#4ea558"/>
+    <!-- Upper skull side -->
+    <polygon points="88,8 100,20 82,28 72,18" fill="#3f8c4f"/>
+    <!-- Snout ridge -->
+    <polygon points="128,6 148,12 152,28 132,22 122,22" fill="#3f8c4f"/>
+    <!-- Nose tip -->
+    <polygon points="148,12 160,22 152,32 152,28" fill="#2f7a3e"/>
+    <!-- Cheek / jaw base -->
+    <polygon points="100,20 122,22 132,38 108,40 90,36 82,28" fill="#1e4f29"/>
+    <!-- Lower jaw -->
+    <polygon points="108,40 132,38 152,32 148,44 130,50 112,48" fill="#17401f"/>
+    <!-- Jaw bottom dark shadow -->
+    <polygon points="112,48 130,50 124,56 116,54" fill="#0a2412"/>
+    <!-- Back of head / neck start -->
+    <polygon points="72,18 82,28 90,36 78,42 65,32" fill="#2f7a3e"/>
+    <!-- Eye socket -->
+    <polygon points="115,12 128,14 126,22 113,22" fill="#0a1f13"/>
+  </g>
+  <!-- Eye highlight -->
+  <circle cx="120" cy="17" r="2.6" fill="#0a1f13"/>
+  <circle cx="121" cy="16.2" r="0.9" fill="#4ea558"/>
+
+  <!-- Fangs (small white triangles on the jaw) -->
+  <g fill="#e8ede4" stroke="#0a1f13" stroke-width="0.3">
+    <polygon points="120,40 122.5,48 124.5,40"/>
+    <polygon points="128,40 130,47 132,40"/>
+  </g>
+</svg>

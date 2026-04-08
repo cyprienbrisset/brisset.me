@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Low-poly Amazonian forest">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#1e4a2d"/>
+      <stop offset="40%" stop-color="#11301c"/>
+      <stop offset="100%" stop-color="#050f08"/>
+    </linearGradient>
+    <radialGradient id="mist" cx="50%" cy="30%" r="60%">
+      <stop offset="0%"  stop-color="rgba(120,180,120,0.18)"/>
+      <stop offset="60%" stop-color="rgba(120,180,120,0.04)"/>
+      <stop offset="100%" stop-color="rgba(120,180,120,0)"/>
+    </radialGradient>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.5"/>
+    </filter>
+  </defs>
+
+  <!-- Sky / canopy gradient -->
+  <rect width="1440" height="900" fill="url(#sky)"/>
+  <rect width="1440" height="900" fill="url(#mist)"/>
+
+  <!-- ===== Layer 5 — very far canopy (lightest, mist) ===== -->
+  <g fill="#27593a" opacity="0.55">
+    <polygon points="0,470 110,380 230,440 340,360 450,430 560,350 680,420 790,340 900,410 1010,330 1130,400 1240,330 1360,400 1440,360 1440,900 0,900"/>
+  </g>
+
+  <!-- ===== Layer 4 — far canopy ===== -->
+  <g fill="#1c4128">
+    <polygon points="0,550 90,470 190,530 290,440 390,510 490,430 590,500 690,420 790,490 890,410 990,480 1090,400 1190,470 1290,390 1390,460 1440,430 1440,900 0,900"/>
+    <!-- scattered far trees (triangles) -->
+    <polygon points="60,550 100,430 140,550"/>
+    <polygon points="220,540 270,420 320,540"/>
+    <polygon points="430,520 490,400 550,520"/>
+    <polygon points="660,510 720,395 780,510"/>
+    <polygon points="910,500 965,390 1020,500"/>
+    <polygon points="1180,510 1230,405 1280,510"/>
+  </g>
+
+  <!-- ===== Layer 3 — mid canopy ===== -->
+  <g fill="#143220">
+    <polygon points="0,650 80,560 170,620 260,530 350,600 440,520 530,590 620,510 710,580 800,500 890,570 980,490 1070,560 1160,480 1250,550 1340,470 1440,540 1440,900 0,900"/>
+    <!-- mid trees -->
+    <polygon points="30,680 80,520 130,680"/>
+    <polygon points="180,660 240,500 300,660"/>
+    <polygon points="350,670 410,510 470,670"/>
+    <polygon points="520,660 580,495 640,660"/>
+    <polygon points="690,670 760,505 820,670"/>
+    <polygon points="870,660 935,500 1000,660"/>
+    <polygon points="1060,670 1125,510 1180,670"/>
+    <polygon points="1240,660 1305,500 1360,660"/>
+    <polygon points="1400,670 1440,530 1440,670"/>
+  </g>
+
+  <!-- ===== Layer 2 — near triangular trees ===== -->
+  <g fill="#0a1f13">
+    <polygon points="0,780 50,650 100,780"/>
+    <polygon points="80,800 160,580 240,800"/>
+    <polygon points="220,790 310,620 400,790"/>
+    <polygon points="380,800 470,600 560,800"/>
+    <polygon points="540,790 630,610 720,790"/>
+    <polygon points="700,800 800,590 900,800"/>
+    <polygon points="880,790 970,620 1060,790"/>
+    <polygon points="1040,800 1130,600 1220,800"/>
+    <polygon points="1200,790 1290,620 1380,790"/>
+    <polygon points="1360,800 1440,650 1440,800"/>
+  </g>
+
+  <!-- ===== Layer 1 — foreground floor ===== -->
+  <g fill="#03100a">
+    <polygon points="0,900 0,790 80,770 160,800 240,770 320,795 400,765 480,790 560,770 640,800 720,770 800,795 880,765 960,790 1040,770 1120,800 1200,770 1280,790 1360,770 1440,795 1440,900"/>
+  </g>
+
+  <!-- ===== Faceted low-poly highlights ===== -->
+  <g stroke="rgba(74,222,128,0.10)" stroke-width="0.6">
+    <polygon points="120,720 160,660 180,740" fill="rgba(74,222,128,0.04)"/>
+    <polygon points="360,735 410,665 435,760" fill="rgba(74,222,128,0.04)"/>
+    <polygon points="640,720 700,650 720,740" fill="rgba(74,222,128,0.05)"/>
+    <polygon points="920,730 980,660 1000,745" fill="rgba(74,222,128,0.04)"/>
+    <polygon points="1200,720 1260,650 1280,735" fill="rgba(74,222,128,0.04)"/>
+  </g>
+
+  <!-- ===== Fireflies / phosphor spore highlights ===== -->
+  <g fill="#4ade80" filter="url(#softGlow)">
+    <circle cx="220" cy="480" r="1.8" opacity="0.9"/>
+    <circle cx="410" cy="520" r="1.2" opacity="0.6"/>
+    <circle cx="560" cy="470" r="2"   opacity="0.85"/>
+    <circle cx="720" cy="540" r="1.3" opacity="0.5"/>
+    <circle cx="880" cy="490" r="1.8" opacity="0.9"/>
+    <circle cx="1020" cy="530" r="1"  opacity="0.6"/>
+    <circle cx="1180" cy="480" r="1.6" opacity="0.8"/>
+    <circle cx="1320" cy="520" r="1.2" opacity="0.55"/>
+    <circle cx="160" cy="620" r="1.4" opacity="0.7"/>
+    <circle cx="480" cy="650" r="1"   opacity="0.5"/>
+    <circle cx="760" cy="620" r="1.6" opacity="0.75"/>
+    <circle cx="1080" cy="640" r="1.2" opacity="0.6"/>
+  </g>
+</svg>

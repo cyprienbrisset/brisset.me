@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Phonon — Dictée vocale temps réel · Cyprien Brisset</title>
+<meta name="description" content="Phonon — application desktop native de dictée vocale. Transcription temps réel en 99 langues, IA locale ou cloud au choix. Construit avec Rust + Tauri + Whisper." />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        bg: '#081A0E',
+        'bg-alt': '#0E2615',
+        'bg-elev': '#152E1C',
+        ink: '#E8EDE4',
+        'ink-muted': '#8A9588',
+        line: 'rgba(232,237,228,0.08)',
+        accent: '#4ADE80',
+        'accent-deep': '#16A34A',
+      },
+      fontFamily: {
+        display: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+      },
+    }
+  }
+}
+</script>
+<style>
+  html { scrollbar-width: none; -ms-overflow-style: none; scroll-behavior: smooth; }
+  html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+  body {
+    background: #050f08;
+    color: #E8EDE4;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .font-display { font-family: 'Fraunces', Georgia, serif; font-optical-sizing: auto; font-variation-settings: "opsz" 144; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* Grain overlay */
+  body::before {
+    content: "";
+    position: fixed; inset: 0; pointer-events: none; z-index: 100;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+    opacity: 0.03; mix-blend-mode: overlay;
+  }
+
+  /* Multi-plane jungle (static parallax via JS) */
+  .jungle-layer {
+    position: fixed;
+    left: 0; right: 0;
+    pointer-events: none;
+    will-change: transform;
+    transform: translate3d(0,0,0);
+    background-size: cover;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  #jungle-far  { top: -15vh; height: 130vh; z-index: -3; background-color: #050f08; opacity: 0.75; }
+  #jungle-mid  { top: -20vh; height: 140vh; z-index: -2; background-image: url('../public/jungle-bg.svg'); }
+  #jungle-near { top: -5vh;  height: 150vh; z-index: -1; }
+  .jungle-overlay {
+    position: fixed; inset: 0; z-index: -1;
+    background: linear-gradient(to bottom, rgba(5,15,8,0) 0%, rgba(5,15,8,0.45) 50%, rgba(5,15,8,0.85) 100%);
+    pointer-events: none;
+  }
+
+  /* Section veil */
+  .section-veil      { position: relative; z-index: 10; background: rgba(5,15,8,0.88); }
+  .section-veil-tint { position: relative; z-index: 10; background: rgba(14,38,21,0.84); }
+
+  /* Vines */
+  .vine {
+    position: fixed;
+    top: -10vh;
+    width: 110px;
+    height: 130vh;
+    pointer-events: none;
+    will-change: transform;
+    transform: translate3d(0,0,0);
+  }
+  .vine svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .vine-left  { left: 0; }
+  .vine-right { right: 0; }
+  .vine-mirror { transform: translate3d(0,0,0) scaleX(-1); }
+  .vine-thin  { width: 58px; opacity: 0.85; }
+  @media (max-width: 900px) { .vine-thin { display: none; } }
+  @media (max-width: 600px) { .vine { display: none; } }
+
+  /* Slow spin for header logo */
+  @keyframes spin-slow { to { transform: rotate(360deg); } }
+  .spin-slow { animation: spin-slow 90s linear infinite; transform-origin: center; }
+
+  /* Buttons */
+  .btn-primary {
+    position: relative; display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.85rem 1.6rem; border-radius: 9999px;
+    background: rgba(74,222,128,0.10);
+    border: 1px solid rgba(74,222,128,0.35);
+    color: #E8EDE4; font-weight: 500; font-size: 0.95rem;
+    transition: transform 150ms ease-out, background 200ms, border-color 200ms;
+  }
+  .btn-primary:hover { background: rgba(74,222,128,0.18); border-color: rgba(74,222,128,0.6); }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-ghost { display:inline-flex; align-items:center; gap:0.5rem; padding:0.85rem 1.2rem; color:#8A9588; font-size:0.95rem; transition:color 200ms; }
+  .btn-ghost:hover { color:#E8EDE4; }
+
+  /* Custom snake scrollbar */
+  .scroll-snake {
+    position: fixed; right: 24px; top: 100px; bottom: 100px; width: 28px;
+    z-index: 40; pointer-events: none;
+  }
+  .scroll-snake__track {
+    position: absolute; left: 50%; top: 0; bottom: 0; width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(232,237,228,0.12) 12%, rgba(232,237,228,0.12) 88%, transparent);
+    transform: translateX(-50%);
+  }
+  .scroll-snake__body {
+    position: absolute; left: 50%; top: 0; width: 20px; height: 56px;
+    transform: translate(-50%, 0);
+    color: #4ADE80; will-change: transform;
+  }
+  .scroll-snake__body svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 0 8px rgba(74,222,128,0.55)); }
+
+  /* Word reveal */
+  @keyframes word-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  .word { display: inline-block; opacity: 0; animation: word-in 700ms cubic-bezier(0.25,1,0.5,1) forwards; }
+  .word:nth-child(1){animation-delay:.05s}.word:nth-child(2){animation-delay:.12s}
+  .word:nth-child(3){animation-delay:.19s}.word:nth-child(4){animation-delay:.26s}
+  .word:nth-child(5){animation-delay:.33s}
+
+  section[id] { scroll-margin-top: 80px; }
+
+  /* Mock screenshot frame */
+  .screen-frame {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(74,222,128,0.22);
+    background: #0a1f13;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(74,222,128,0.08) inset;
+  }
+  .screen-frame::before {
+    content: "";
+    display: block;
+    height: 28px;
+    background: linear-gradient(to bottom, #152e1c, #0a1f13);
+    border-bottom: 1px solid rgba(232,237,228,0.08);
+  }
+  .screen-frame::after {
+    content: "";
+    position: absolute; top: 9px; left: 14px; width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #4ADE80;
+    box-shadow: 16px 0 0 #F59E0B, 32px 0 0 #EF4444;
+  }
+
+  /* Feature card hover */
+  .feature-card {
+    transition: border-color 300ms, transform 250ms;
+  }
+  .feature-card:hover { border-color: rgba(74,222,128,0.45); transform: translateY(-3px); }
+
+  /* Metric big number */
+  .metric-num {
+    font-family: 'Fraunces', serif;
+    font-size: 4rem;
+    font-weight: 500;
+    line-height: 1;
+    color: #4ADE80;
+    font-variation-settings: "opsz" 144;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ PARALLAX JUNGLE -->
+<div id="jungle-far" class="jungle-layer" aria-hidden="true">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice" style="width:100%;height:100%">
+    <defs>
+      <linearGradient id="farSky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="#2f6645"/>
+        <stop offset="45%" stop-color="#1c4128"/>
+        <stop offset="100%" stop-color="#0a1f13"/>
+      </linearGradient>
+    </defs>
+    <rect width="1440" height="900" fill="url(#farSky)"/>
+    <polygon points="0,540 180,430 360,510 530,410 690,490 860,400 1030,480 1200,390 1360,470 1440,420 1440,900 0,900" fill="#2a5738" opacity="0.55"/>
+    <polygon points="0,640 160,550 320,610 480,530 640,600 810,520 970,590 1140,510 1290,580 1440,540 1440,900 0,900" fill="#1e4229" opacity="0.75"/>
+  </svg>
+</div>
+<div id="jungle-mid" class="jungle-layer" aria-hidden="true"></div>
+<div id="jungle-near" class="jungle-layer" aria-hidden="true">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice" style="width:100%;height:100%">
+    <g fill="#010603">
+      <polygon points="0,900 0,200 45,190 80,210 110,240 90,330 105,440 85,560 100,680 75,820 55,900"/>
+      <polygon points="1440,900 1440,180 1395,170 1360,195 1335,240 1355,340 1340,460 1360,580 1345,700 1370,830 1390,900"/>
+    </g>
+    <g fill="#020806">
+      <polygon points="130,900 240,480 350,900"/>
+      <polygon points="390,900 500,510 610,900"/>
+      <polygon points="650,900 780,470 910,900"/>
+      <polygon points="950,900 1070,490 1190,900"/>
+      <polygon points="1210,900 1320,500 1410,900"/>
+    </g>
+    <g fill="#000402">
+      <polygon points="0,900 0,820 180,790 360,820 540,795 720,825 900,790 1080,820 1260,795 1440,820 1440,900"/>
+    </g>
+  </svg>
+</div>
+<div class="jungle-overlay" aria-hidden="true"></div>
+
+<!-- ============================================================ VINES -->
+<div class="vine vine-left" data-speed="0.28" aria-hidden="true">
+  <svg viewBox="0 0 110 1400" preserveAspectRatio="xMinYMin slice">
+    <path d="M 18 -30 C 55 70, 10 170, 35 280 C 60 380, 5 490, 30 600 C 55 700, 8 810, 32 920 C 58 1020, 12 1140, 40 1260 C 60 1340, 20 1420, 30 1500" stroke="#1c4128" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <g fill="#1e4a2d" stroke="#08190e" stroke-width="0.7">
+      <g transform="translate(35 60) rotate(25)"><ellipse rx="22" ry="9"/><path d="M -20 0 L 22 0" stroke="#08190e" stroke-width="0.6"/></g>
+      <g transform="translate(18 150) rotate(-30)"><ellipse rx="18" ry="7"/></g>
+      <g transform="translate(42 250) rotate(32)"><ellipse rx="24" ry="10"/></g>
+      <g transform="translate(20 360) rotate(-28)"><ellipse rx="20" ry="8"/></g>
+      <g transform="translate(45 460) rotate(28)"><ellipse rx="23" ry="9"/></g>
+      <g transform="translate(22 570) rotate(-32)"><ellipse rx="19" ry="7.5"/></g>
+      <g transform="translate(48 680) rotate(25)"><ellipse rx="22" ry="9"/></g>
+      <g transform="translate(20 790) rotate(-30)"><ellipse rx="20" ry="8"/></g>
+      <g transform="translate(46 900) rotate(30)"><ellipse rx="24" ry="10"/></g>
+      <g transform="translate(25 1010) rotate(-28)"><ellipse rx="19" ry="7.5"/></g>
+    </g>
+  </svg>
+</div>
+<div class="vine vine-right vine-mirror" data-speed="0.22" aria-hidden="true">
+  <svg viewBox="0 0 110 1400" preserveAspectRatio="xMinYMin slice">
+    <path d="M 22 -40 C 50 90, 8 200, 36 310 C 62 420, 12 520, 38 630 C 60 730, 15 840, 40 950 C 62 1050, 18 1170, 44 1290 C 62 1370, 22 1440, 38 1520" stroke="#1c4128" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <g fill="#1e4a2d" stroke="#08190e" stroke-width="0.7">
+      <g transform="translate(38 80) rotate(-28)"><ellipse rx="22" ry="9"/></g>
+      <g transform="translate(20 180) rotate(32)"><ellipse rx="20" ry="8"/></g>
+      <g transform="translate(46 290) rotate(-30)"><ellipse rx="23" ry="9.5"/></g>
+      <g transform="translate(24 400) rotate(28)"><ellipse rx="19" ry="7.5"/></g>
+      <g transform="translate(48 510) rotate(-32)"><ellipse rx="24" ry="10"/></g>
+      <g transform="translate(26 620) rotate(30)"><ellipse rx="20" ry="8"/></g>
+      <g transform="translate(50 730) rotate(-28)"><ellipse rx="22" ry="9"/></g>
+      <g transform="translate(28 840) rotate(32)"><ellipse rx="19" ry="7.5"/></g>
+      <g transform="translate(52 950) rotate(-30)"><ellipse rx="24" ry="10"/></g>
+      <g transform="translate(30 1060) rotate(28)"><ellipse rx="20" ry="8"/></g>
+    </g>
+  </svg>
+</div>
+
+<!-- ============================================================ CUSTOM SNAKE SCROLLBAR -->
+<div class="scroll-snake" aria-hidden="true">
+  <div class="scroll-snake__track"></div>
+  <div class="scroll-snake__body" id="scroll-snake-body">
+    <svg viewBox="0 0 20 56" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 10 4 C 3 12, 17 20, 10 28 C 3 36, 17 44, 10 50" />
+      <circle cx="10" cy="50" r="2.8" fill="currentColor" stroke="none"/>
+      <circle cx="10.9" cy="49.4" r="0.55" fill="#0C110E" stroke="none"/>
+      <g stroke="#ef4444" stroke-width="0.9" stroke-linecap="round">
+        <path d="M 10 53 L 10 55.4" />
+        <path d="M 10 55.4 L 8.8 57" />
+        <path d="M 10 55.4 L 11.2 57" />
+      </g>
+    </svg>
+  </div>
+</div>
+
+<!-- ============================================================ HEADER -->
+<header class="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-bg/70 border-b border-line">
+  <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    <a href="./landing.html" class="flex items-center gap-3 group">
+      <div class="relative w-14 h-14">
+        <img src="../public/logo.svg" alt="Ouroboros" class="w-full h-full object-contain spin-slow"/>
+      </div>
+      <span class="font-display text-lg tracking-tight">Cyprien Brisset</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-8 text-sm text-ink-muted">
+      <a href="./landing.html#projects" class="hover:text-ink transition-colors">Projets</a>
+      <a href="./landing.html#about" class="hover:text-ink transition-colors">Philosophie</a>
+      <a href="./landing.html#stack" class="hover:text-ink transition-colors">Stack</a>
+      <a href="./landing.html#contact" class="hover:text-ink transition-colors">Contact</a>
+    </nav>
+    <a href="https://github.com/Alchim-IA" class="btn-primary !py-2 !px-4 !text-sm">GitHub</a>
+  </div>
+</header>
+
+<!-- ============================================================ PROJECT HERO -->
+<section class="relative pt-40 pb-20 section-veil">
+  <div class="max-w-5xl mx-auto px-6">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-xs font-mono text-ink-muted mb-8">
+      <a href="./landing.html" class="hover:text-ink">Accueil</a>
+      <span>/</span>
+      <a href="./landing.html#projects" class="hover:text-ink">Projets</a>
+      <span>/</span>
+      <span class="text-accent">Phonon</span>
+    </div>
+
+    <!-- Category + version -->
+    <div class="flex items-center gap-3 mb-6">
+      <span class="text-xs font-mono text-accent tracking-widest">APPLICATION DESKTOP</span>
+      <span class="w-1 h-1 rounded-full bg-ink-muted"></span>
+      <span class="text-xs font-mono text-ink-muted">v1.2.0 — avril 2026</span>
+      <span class="w-1 h-1 rounded-full bg-ink-muted"></span>
+      <span class="inline-flex items-center gap-1.5 text-xs font-mono text-accent">
+        <span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span> Actif
+      </span>
+    </div>
+
+    <h1 class="font-display text-5xl md:text-7xl lg:text-8xl leading-[1.02] tracking-tight mb-6">
+      <span class="word">Phonon</span>
+    </h1>
+    <p class="font-display text-2xl md:text-3xl text-ink-muted leading-snug italic max-w-3xl mb-10">
+      Votre voix, transcrite en temps réel —<br/>
+      <span class="text-accent not-italic">en local, en privé, dans 99 langues.</span>
+    </p>
+
+    <div class="flex flex-wrap items-center gap-3 mb-12">
+      <a href="#" class="btn-primary">
+        Télécharger
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
+      </a>
+      <a href="https://github.com/Alchim-IA/phonon" class="btn-ghost">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.6.5.5 5.6.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2.9-.3 2-.4 3-.4s2.1.1 3 .4c2.3-1.6 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.9 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.2c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.6 18.4.5 12 .5z"/></svg>
+        Code source
+      </a>
+      <a href="#" class="btn-ghost">Voir la démo →</a>
+    </div>
+
+    <!-- Tech badges -->
+    <div class="flex flex-wrap gap-2">
+      <span class="text-xs font-mono px-3 py-1.5 rounded-full border border-line text-ink-muted">rust</span>
+      <span class="text-xs font-mono px-3 py-1.5 rounded-full border border-line text-ink-muted">tauri</span>
+      <span class="text-xs font-mono px-3 py-1.5 rounded-full border border-line text-ink-muted">whisper.cpp</span>
+      <span class="text-xs font-mono px-3 py-1.5 rounded-full border border-line text-ink-muted">react</span>
+      <span class="text-xs font-mono px-3 py-1.5 rounded-full border border-line text-ink-muted">webaudio</span>
+      <span class="text-xs font-mono px-3 py-1.5 rounded-full border border-accent/40 text-accent">open-source</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ HERO SCREENSHOT (real) -->
+<section class="relative -mt-8 section-veil pb-20">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="screen-frame">
+      <img src="https://raw.githubusercontent.com/Alchim-IA/phonon/master/docs/screenshots/main-screen.png"
+           alt="Phonon — écran principal"
+           class="block w-full h-auto"
+           loading="eager" />
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ METRICS STRIP -->
+<section class="py-16 section-veil-tint">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-10 text-left">
+      <div>
+        <div class="metric-num">99</div>
+        <div class="mt-2 text-sm text-ink-muted">langues supportées</div>
+      </div>
+      <div>
+        <div class="metric-num">0ms</div>
+        <div class="mt-2 text-sm text-ink-muted">latence réseau en local</div>
+      </div>
+      <div>
+        <div class="metric-num">18<span class="text-2xl align-super">Mo</span></div>
+        <div class="mt-2 text-sm text-ink-muted">installer desktop</div>
+      </div>
+      <div>
+        <div class="metric-num">4<span class="text-2xl align-super">x</span></div>
+        <div class="mt-2 text-sm text-ink-muted">plus rapide que temps réel</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ THE PROBLEM -->
+<section class="py-24 section-veil">
+  <div class="max-w-4xl mx-auto px-6">
+    <div class="text-xs font-mono text-accent tracking-widest mb-4">01 — LE PROBLÈME</div>
+    <h2 class="font-display text-4xl md:text-5xl leading-tight mb-8">
+      Dicter à sa machine ne devrait pas<br/>
+      <span class="italic text-accent">passer par le cloud.</span>
+    </h2>
+    <div class="grid md:grid-cols-2 gap-8 text-ink-muted text-base leading-relaxed">
+      <p>
+        Les outils de dictée existants sont presque tous cloud-only. Tu parles à ton ordinateur,
+        ta voix part sur des serveurs américains, tu paies un abonnement, et tu attends la réponse.
+        Si ta connexion flanche, plus de dictée.
+      </p>
+      <p>
+        Pour beaucoup d'usages — médical, juridique, journalistique, intime — ça n'est pas acceptable.
+        Pour d'autres, c'est juste lent et coûteux sans raison. Phonon propose une alternative :
+        traitement local par défaut, cloud en option, et une vraie vitesse.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ FEATURES -->
+<section class="py-24 section-veil-tint">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-xs font-mono text-accent tracking-widest mb-4">02 — FONCTIONNALITÉS</div>
+    <h2 class="font-display text-4xl md:text-5xl leading-tight mb-12">
+      Ce que Phonon <span class="italic text-accent">fait bien.</span>
+    </h2>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Feature 1 -->
+      <div class="feature-card rounded-2xl border border-line bg-bg-elev p-7">
+        <div class="w-10 h-10 rounded-lg bg-accent/10 border border-accent/30 flex items-center justify-center mb-5">
+          <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1v22M17 6l5 6-5 6M7 18l-5-6 5-6"/>
+          </svg>
+        </div>
+        <h3 class="font-display text-xl mb-2">Local par défaut</h3>
+        <p class="text-sm text-ink-muted leading-relaxed">
+          Modèles Whisper embarqués, téléchargés une seule fois. Aucune donnée ne quitte ta machine
+          sauf si tu l'exportes. Fonctionne totalement hors-ligne.
+        </p>
+      </div>
+
+      <div class="feature-card rounded-2xl border border-line bg-bg-elev p-7">
+        <div class="w-10 h-10 rounded-lg bg-accent/10 border border-accent/30 flex items-center justify-center mb-5">
+          <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+        </div>
+        <h3 class="font-display text-xl mb-2">Cloud en option</h3>
+        <p class="text-sm text-ink-muted leading-relaxed">
+          Pour les cas où tu veux la puissance des derniers modèles : Groq, OpenAI, Azure. Tu gardes
+          le contrôle, tu configures ta propre clé API.
+        </p>
+      </div>
+
+      <div class="feature-card rounded-2xl border border-line bg-bg-elev p-7">
+        <div class="w-10 h-10 rounded-lg bg-accent/10 border border-accent/30 flex items-center justify-center mb-5">
+          <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+          </svg>
+        </div>
+        <h3 class="font-display text-xl mb-2">Temps réel</h3>
+        <p class="text-sm text-ink-muted leading-relaxed">
+          Streaming par morceaux audio glissants. La transcription s'affiche pendant que tu parles,
+          avec auto-correction contextuelle.
+        </p>
+      </div>
+
+      <div class="feature-card rounded-2xl border border-line bg-bg-elev p-7">
+        <div class="w-10 h-10 rounded-lg bg-accent/10 border border-accent/30 flex items-center justify-center mb-5">
+          <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+          </svg>
+        </div>
+        <h3 class="font-display text-xl mb-2">99 langues</h3>
+        <p class="text-sm text-ink-muted leading-relaxed">
+          Détection automatique ou forçage manuel. Du français au mandarin, en passant par
+          l'arabe, l'hindi et le swahili.
+        </p>
+      </div>
+
+      <div class="feature-card rounded-2xl border border-line bg-bg-elev p-7">
+        <div class="w-10 h-10 rounded-lg bg-accent/10 border border-accent/30 flex items-center justify-center mb-5">
+          <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+          </svg>
+        </div>
+        <h3 class="font-display text-xl mb-2">Chiffrement E2E</h3>
+        <p class="text-sm text-ink-muted leading-relaxed">
+          Si tu utilises le cloud, les audios sont chiffrés côté client avant envoi. Personne,
+          même pas Cyprien, n'a accès au contenu.
+        </p>
+      </div>
+
+      <div class="feature-card rounded-2xl border border-line bg-bg-elev p-7">
+        <div class="w-10 h-10 rounded-lg bg-accent/10 border border-accent/30 flex items-center justify-center mb-5">
+          <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </div>
+        <h3 class="font-display text-xl mb-2">Édition en ligne</h3>
+        <p class="text-sm text-ink-muted leading-relaxed">
+          Corrige pendant que ça dicte. Phonon apprend tes corrections et améliore la transcription
+          en temps réel sur ton vocabulaire.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ HOW IT WORKS -->
+<section class="py-24 section-veil">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-xs font-mono text-accent tracking-widest mb-4">03 — COMMENT ÇA MARCHE</div>
+    <h2 class="font-display text-4xl md:text-5xl leading-tight mb-14">
+      L'architecture, <span class="italic text-accent">démystifiée.</span>
+    </h2>
+
+    <div class="space-y-10">
+      <div class="flex gap-6 items-start">
+        <div class="shrink-0 w-12 h-12 rounded-full border border-accent/40 bg-accent/5 flex items-center justify-center font-mono text-accent">01</div>
+        <div>
+          <h3 class="font-display text-2xl mb-2">Capture audio</h3>
+          <p class="text-ink-muted leading-relaxed">
+            <span class="font-mono text-accent text-sm">cpal</span> (Rust) capture le flux micro
+            en 16kHz mono PCM, dans un buffer circulaire de 30 secondes. Aucun fichier n'est écrit
+            sur disque tant que tu ne l'exportes pas.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex gap-6 items-start">
+        <div class="shrink-0 w-12 h-12 rounded-full border border-accent/40 bg-accent/5 flex items-center justify-center font-mono text-accent">02</div>
+        <div>
+          <h3 class="font-display text-2xl mb-2">Détection d'activité vocale</h3>
+          <p class="text-ink-muted leading-relaxed">
+            Un VAD léger (<span class="font-mono text-accent text-sm">silero</span>) identifie les segments de parole
+            et découpe en chunks de 2-5 secondes, alignés sur les silences pour ne jamais couper un mot.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex gap-6 items-start">
+        <div class="shrink-0 w-12 h-12 rounded-full border border-accent/40 bg-accent/5 flex items-center justify-center font-mono text-accent">03</div>
+        <div>
+          <h3 class="font-display text-2xl mb-2">Transcription Whisper</h3>
+          <p class="text-ink-muted leading-relaxed">
+            Chaque chunk est envoyé à <span class="font-mono text-accent text-sm">whisper.cpp</span> (quantized INT8)
+            via un thread pool. Sur M2 Pro : ~0.25s pour transcrire 5s d'audio → 20× temps réel.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex gap-6 items-start">
+        <div class="shrink-0 w-12 h-12 rounded-full border border-accent/40 bg-accent/5 flex items-center justify-center font-mono text-accent">04</div>
+        <div>
+          <h3 class="font-display text-2xl mb-2">Affichage streaming</h3>
+          <p class="text-ink-muted leading-relaxed">
+            Les segments traduits remontent au front React via un canal Tauri, qui les assemble en
+            un document live avec coloration par confiance et auto-correction des overlaps.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ GALLERY -->
+<section class="py-24 section-veil-tint">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-xs font-mono text-accent tracking-widest mb-4">04 — GALERIE</div>
+    <h2 class="font-display text-4xl md:text-5xl leading-tight mb-12">
+      Aperçu de <span class="italic text-accent">l'interface.</span>
+    </h2>
+    <div class="grid md:grid-cols-2 gap-6">
+      <figure class="screen-frame">
+        <img src="https://raw.githubusercontent.com/Alchim-IA/phonon/master/docs/screenshots/files-screen.png" alt="Phonon — écran fichiers" class="block w-full h-auto" loading="lazy"/>
+      </figure>
+      <figure class="screen-frame">
+        <img src="https://raw.githubusercontent.com/Alchim-IA/phonon/master/docs/screenshots/snippets-section.png" alt="Phonon — snippets" class="block w-full h-auto" loading="lazy"/>
+      </figure>
+      <figure class="screen-frame">
+        <img src="https://raw.githubusercontent.com/Alchim-IA/phonon/master/docs/screenshots/history-screen.png" alt="Phonon — historique" class="block w-full h-auto" loading="lazy"/>
+      </figure>
+      <figure class="screen-frame">
+        <img src="https://raw.githubusercontent.com/Alchim-IA/phonon/master/docs/screenshots/settings-panel.png" alt="Phonon — réglages" class="block w-full h-auto" loading="lazy"/>
+      </figure>
+      <figure class="screen-frame">
+        <img src="https://raw.githubusercontent.com/Alchim-IA/phonon/master/docs/screenshots/dictation-commands.png" alt="Phonon — commandes vocales" class="block w-full h-auto" loading="lazy"/>
+      </figure>
+      <figure class="screen-frame">
+        <img src="https://raw.githubusercontent.com/Alchim-IA/phonon/master/docs/screenshots/integrations-section.png" alt="Phonon — intégrations" class="block w-full h-auto" loading="lazy"/>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ CTA -->
+<section class="py-32 section-veil">
+  <div class="max-w-3xl mx-auto px-6 text-center">
+    <h2 class="font-display text-4xl md:text-6xl leading-tight mb-6">
+      Envie de <span class="italic text-accent">l'essayer&nbsp;?</span>
+    </h2>
+    <p class="text-ink-muted text-lg mb-10">
+      Phonon est gratuit, open-source, et disponible sur macOS, Windows et Linux.
+    </p>
+    <div class="flex flex-wrap justify-center gap-3">
+      <a href="#" class="btn-primary !text-base !py-4 !px-8">Télécharger v1.2.0</a>
+      <a href="https://github.com/Alchim-IA/phonon" class="btn-ghost">Voir sur GitHub →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ RELATED PROJECTS -->
+<section class="py-24 section-veil-tint">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-xs font-mono text-accent tracking-widest mb-4">05 — AUTRES PROJETS</div>
+    <h2 class="font-display text-4xl md:text-5xl leading-tight mb-12">
+      Continuer <span class="italic text-accent">l'exploration.</span>
+    </h2>
+    <div class="grid md:grid-cols-3 gap-6">
+      <a href="./project-photon.html" class="feature-card block rounded-2xl border border-line bg-bg-elev p-7">
+        <div class="text-xs font-mono text-accent/70 mb-4">← PROJET PRÉCÉDENT</div>
+        <h3 class="font-display text-2xl mb-2">Photon</h3>
+        <p class="text-sm text-ink-muted leading-relaxed">Scanner de documents intelligent avec OCR 50+ langues et chiffrement AES-256.</p>
+      </a>
+      <a href="./landing.html#projects" class="feature-card block rounded-2xl border border-line bg-bg-elev p-7">
+        <div class="text-xs font-mono text-accent/70 mb-4">TOUS LES PROJETS</div>
+        <h3 class="font-display text-2xl mb-2">Voir la liste →</h3>
+        <p class="text-sm text-ink-muted leading-relaxed">5 projets open-source, chacun pensé comme une boucle d'amélioration continue.</p>
+      </a>
+      <a href="./project-pulsion.html" class="feature-card block rounded-2xl border border-line bg-bg-elev p-7">
+        <div class="text-xs font-mono text-accent/70 mb-4">PROJET SUIVANT →</div>
+        <h3 class="font-display text-2xl mb-2">Pulsion</h3>
+        <p class="text-sm text-ink-muted leading-relaxed">Studio podcast assisté par IA avec effets DSP et publication multi-plateformes.</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ FOOTER -->
+<footer class="border-t border-line py-12 section-veil">
+  <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-ink-muted">
+    <div class="flex items-center gap-3">
+      <img src="../public/logo.svg" alt="Ouroboros" class="w-10 h-10 object-contain"/>
+      <span class="font-display">Cyprien Brisset</span>
+    </div>
+    <div class="flex items-center gap-6 font-mono text-xs">
+      <a href="https://github.com/Alchim-IA" class="hover:text-ink transition-colors">GitHub</a>
+      <a href="./landing.html#legal" class="hover:text-ink transition-colors">Mentions légales</a>
+      <span>© 2026</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ============================================================ Scroll-driven parallax & snake scrollbar -->
+<script>
+const scrollSnake = document.getElementById('scroll-snake-body');
+const snakeBar    = document.querySelector('.scroll-snake');
+
+const parallaxLayers = [
+  { el: document.getElementById('jungle-far'),  speed: 0.03, mirror: false },
+  { el: document.getElementById('jungle-mid'),  speed: 0.16, mirror: false },
+  { el: document.getElementById('jungle-near'), speed: 0.42, mirror: false },
+];
+document.querySelectorAll('.vine').forEach((v) => {
+  parallaxLayers.push({
+    el: v,
+    speed: parseFloat(v.dataset.speed || '0.25'),
+    mirror: v.classList.contains('vine-mirror'),
+  });
+});
+
+let lastScrollY = window.scrollY;
+function tick() {
+  const curY  = window.scrollY;
+  const delta = curY - lastScrollY;
+  lastScrollY = curY;
+
+  if (delta !== 0) {
+    for (let i = 0; i < parallaxLayers.length; i++) {
+      const l = parallaxLayers[i];
+      const y = (-curY * l.speed).toFixed(1);
+      l.el.style.transform = l.mirror
+        ? `translate3d(0, ${y}px, 0) scaleX(-1)`
+        : `translate3d(0, ${y}px, 0)`;
+    }
+    // Mini snake translates only
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const progress  = maxScroll > 0 ? curY / maxScroll : 0;
+    const trackH    = snakeBar.clientHeight - 56;
+    scrollSnake.style.transform = `translate(-50%, ${(progress * trackH).toFixed(1)}px)`;
+  }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+
+</body>
+</html>

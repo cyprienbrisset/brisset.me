@@ -1,0 +1,1479 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Cyprien Brisset — Développeur indépendant · IA, Desktop, Web</title>
+<meta name="description" content="Je crée des outils intelligents & open source. Développeur passionné par l'IA, les apps desktop et le web — IA locale ou cloud, vous choisissez." />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        bg: '#081A0E',
+        'bg-alt': '#0E2615',
+        'bg-elev': '#152E1C',
+        ink: '#E8EDE4',
+        'ink-muted': '#8A9588',
+        line: 'rgba(232,237,228,0.08)',
+        accent: '#4ADE80',
+        'accent-deep': '#16A34A',
+        'accent-soft': 'rgba(74,222,128,0.08)',
+        'accent-glow': 'rgba(74,222,128,0.20)',
+      },
+      fontFamily: {
+        display: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+      },
+    }
+  }
+}
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body {
+    background: #050f08;
+    color: #E8EDE4;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Multi-plane parallax jungle — 3 depth layers */
+  .jungle-layer {
+    position: fixed;
+    left: 0; right: 0;
+    pointer-events: none;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+    background-size: cover;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+  }
+  /* NO filter: blur() anywhere — it's the single most expensive GPU cost.
+     Depth is communicated via color lightness, opacity, and scale instead. */
+  #jungle-far  { top: -15vh; height: 130vh; z-index: -3; background-color: #050f08; opacity: 0.75; }
+  #jungle-mid  { top: -20vh; height: 140vh; z-index: -2; background-image: url('../public/jungle-bg.svg'); }
+  #jungle-near { top: -5vh;  height: 150vh; z-index: -1; }
+  .jungle-overlay {
+    position: fixed; inset: 0; z-index: -1;
+    background: linear-gradient(to bottom, rgba(5,15,8,0) 0%, rgba(5,15,8,0.35) 55%, rgba(5,15,8,0.85) 100%);
+    pointer-events: none;
+  }
+
+  /* Sections — solid rgba, NO backdrop-filter (heavy on GPU) */
+  .section-veil      { position: relative; z-index: 10; background: rgba(5,15,8,0.88); }
+  .section-veil-tint { position: relative; z-index: 10; background: rgba(14,38,21,0.84); }
+
+  /* Vines — multiple sizes + parallax depths */
+  .vine {
+    position: fixed;
+    top: -10vh;
+    width: 110px;
+    height: 130vh;
+    pointer-events: none;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+  }
+  .vine svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .vine-left  { left: 0; }
+  .vine-right { right: 0; }
+  .vine-mirror { transform: translate3d(0, 0, 0) scaleX(-1); }
+  .vine-thin  { width: 58px;  opacity: 0.85; }
+  .vine-outer { width: 80px;  opacity: 0.6; }
+  .vine-wide  { width: 140px; }
+  /* Pendant vines — short hanging vines from the top of the viewport, inside the content area */
+  .vine-pendant {
+    top: 0;
+    height: 75vh;
+  }
+  @media (max-width: 800px) { .vine-pendant { display: none; } }
+  @media (max-width: 1100px) { .vine-outer { display: none; } }
+  @media (max-width: 900px)  { .vine-thin  { display: none; } }
+  @media (max-width: 600px)  { .vine { display: none; } }
+  .font-display { font-family: 'Fraunces', Georgia, serif; font-optical-sizing: auto; font-variation-settings: "opsz" 144; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* Subtle grain */
+  body::before {
+    content: "";
+    position: fixed; inset: 0; pointer-events: none; z-index: 100;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+    opacity: 0.03; mix-blend-mode: overlay;
+  }
+
+  /* Ring spin — slow continuous rotation of the whole ouroboros */
+  @keyframes spin-slow { to { transform: rotate(360deg); } }
+  .spin-slow { animation: spin-slow 90s linear infinite; transform-origin: center; }
+  .spin-hero { animation: spin-slow 120s linear infinite; transform-origin: center; transform-box: fill-box; }
+
+  /* Slither — the body scales flow around the serpent, infinite seamless loop.
+     The dash pattern is "14 3" (total 17). We animate dashoffset from 0 to 17 → perfect loop. */
+  @keyframes slither {
+    from { stroke-dashoffset: 0; }
+    to   { stroke-dashoffset: -17; }
+  }
+  .snake-body { stroke-dasharray: 14 3; animation: slither 3s linear infinite; }
+
+  /* Gentle breathing pulse on the head glow */
+  @keyframes breathe {
+    0%, 100% { opacity: 0.18; transform: scale(1); }
+    50%      { opacity: 0.30; transform: scale(1.05); }
+  }
+  .breathe { animation: breathe 5s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+
+  /* Divider ring */
+  .divider-ring { width: 44px; height: 44px; }
+
+  /* Card hover ring */
+  .project-card { transition: border-color 400ms cubic-bezier(0.25,1,0.5,1), transform 300ms; }
+  .project-card:hover { border-color: rgba(74,222,128,0.5); transform: translateY(-2px); }
+  .project-card .ring-overlay path { stroke-dasharray: 200; stroke-dashoffset: 200; transition: stroke-dashoffset 700ms cubic-bezier(0.25,1,0.5,1); }
+  .project-card:hover .ring-overlay path { stroke-dashoffset: 0; }
+
+  /* Button */
+  .btn-primary {
+    position: relative; display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.85rem 1.6rem; border-radius: 9999px;
+    background: rgba(74,222,128,0.10);
+    border: 1px solid rgba(74,222,128,0.35);
+    color: #E8EDE4; font-weight: 500; font-size: 0.95rem;
+    transition: transform 150ms ease-out, background 200ms, border-color 200ms;
+  }
+  .btn-primary:hover { background: rgba(74,222,128,0.18); border-color: rgba(74,222,128,0.6); }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary::before {
+    content: ""; position: absolute; inset: -4px; border-radius: 9999px;
+    border: 1px solid rgba(74,222,128,0.18); pointer-events: none;
+  }
+  .btn-ghost { display:inline-flex; align-items:center; gap:0.5rem; padding:0.85rem 1.2rem; color:#8A9588; font-size:0.95rem; transition:color 200ms; }
+  .btn-ghost:hover { color:#E8EDE4; }
+
+  /* Marquee stack */
+  @keyframes marquee { from { transform: translateX(0);} to { transform: translateX(-50%);} }
+  .marquee-track { display: flex; gap: 3rem; width: max-content; animation: marquee 40s linear infinite; }
+
+  /* Hero heading word reveal */
+  @keyframes word-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  .word { display: inline-block; opacity: 0; animation: word-in 700ms cubic-bezier(0.25,1,0.5,1) forwards; }
+  .word:nth-child(1){animation-delay:.05s}.word:nth-child(2){animation-delay:.12s}.word:nth-child(3){animation-delay:.19s}
+  .word:nth-child(4){animation-delay:.26s}.word:nth-child(5){animation-delay:.33s}.word:nth-child(6){animation-delay:.40s}
+  .word:nth-child(7){animation-delay:.47s}
+
+  /* 3D canvas inside the hero only */
+  .hero-bg { position: absolute; inset: 0; overflow: hidden; z-index: 0; }
+  #hero-canvas { display: block; width: 100%; height: 100%; }
+  /* Hero bg vignette — dark ring fading outward (unchanged) */
+  .hero-bg::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 55%, rgba(5,15,8,0.75) 100%); pointer-events: none; }
+  /* Contrast veil BEHIND the hero text content — centered dark disc, darker at core */
+  .hero-text-veil {
+    position: relative;
+  }
+  .hero-text-veil::before {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 140%;
+    height: 200%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(
+      ellipse 55% 50% at center,
+      rgba(5,15,8,0.88) 0%,
+      rgba(5,15,8,0.72) 35%,
+      rgba(5,15,8,0.35) 65%,
+      rgba(5,15,8,0) 85%
+    );
+    pointer-events: none;
+    z-index: -1;
+  }
+  /* Insurance: subtle text-shadow on hero display text for legibility */
+  .hero-text-veil h1,
+  .hero-text-veil p {
+    text-shadow: 0 2px 20px rgba(0,0,0,0.85), 0 0 40px rgba(0,0,0,0.6);
+  }
+
+  /* ===== Snake-scale hexagonal grid (stack section) =====
+     Proper honeycomb math:
+       hex width W = 160, gap G = 14
+       → horizontal pitch between centers in same row = W + G = 174
+       → offset row N+1 by (W + G) / 2 = 87px
+       → vertical pitch = 0.75 × H (pointy-top hexagon) = 0.75 × 184 = 138
+       → margin-top = -46 to interlock rows                                */
+  .scale-grid { display: flex; flex-direction: column; align-items: center; }
+  .scale-row {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    /* Interlocked honeycomb with tiny visible breathing space — rows sit in
+       the valleys of the row above but without touching the neighbor tips.
+       True honeycomb overlap would be -46; we relax to -32 for a small gap. */
+    margin-top: -32px;
+  }
+  .scale-row:first-child { margin-top: 0; }
+  /* Flex-centering already produces a quinconce: 4 hexes centered under 5 hexes
+     sit naturally in the valleys between row-1 hexes. 3 hexes centered align
+     under row-1's middle 3. No manual translateX needed. */
+  .scale-row-2 { transform: translateX(0); }
+  .scale-row-3 { transform: translateX(0); }
+  .scale {
+    position: relative;
+    width: 160px;
+    height: 184px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    transition: transform 240ms cubic-bezier(0.25,1,0.5,1);
+  }
+  .scale svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    fill: rgba(14,38,21,0.78);
+    stroke: rgba(74,222,128,0.35);
+    stroke-width: 1.4;
+    transition: fill 240ms, stroke 240ms, filter 240ms;
+  }
+  .scale:hover {
+    transform: translateY(-6px);
+    z-index: 5;
+  }
+  .scale:hover svg {
+    fill: rgba(22,66,36,0.9);
+    stroke: rgba(74,222,128,0.85);
+    filter: drop-shadow(0 0 14px rgba(74,222,128,0.35));
+  }
+  .scale-highlight svg {
+    fill: rgba(22,66,36,0.88);
+    stroke: rgba(74,222,128,0.65);
+  }
+  .scale-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 0 12px;
+  }
+  .scale-name {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #E8EDE4;
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+  .scale-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: #4ade80;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  /* Category tints — subtle color variation per tech family */
+  .scale[data-category="lang"]      svg { fill: rgba(14,38,21,0.78); }
+  .scale[data-category="framework"] svg { fill: rgba(18,44,26,0.82); }
+  .scale[data-category="data"]      svg { fill: rgba(14,34,20,0.80); }
+  .scale[data-category="ai"]        svg { fill: rgba(20,50,30,0.85); stroke: rgba(74,222,128,0.5); }
+  .scale[data-category="ops"]       svg { fill: rgba(14,30,18,0.78); }
+
+  @media (max-width: 900px) {
+    .scale { width: 120px; height: 138px; }
+    .scale-row { gap: 14px; margin-top: -24px; }
+    .scale-row-2 { transform: translateX(0); }
+    .scale-row-3 { transform: translateX(0); }
+    .scale-name { font-size: 0.9rem; }
+    .scale-tag  { font-size: 0.55rem; }
+  }
+  @media (max-width: 600px) {
+    .scale { width: 90px; height: 104px; }
+    .scale-row { gap: 10px; margin-top: -18px; }
+    .scale-row-2 { transform: translateX(0); }
+    .scale-row-3 { transform: translateX(0); }
+    .scale-name { font-size: 0.72rem; }
+    .scale-tag  { font-size: 0.5rem; }
+  }
+
+  /* Hide native scrollbar */
+  html { scrollbar-width: none; -ms-overflow-style: none; }
+  html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+  /* Custom slithering snake scrollbar */
+  .scroll-snake {
+    position: fixed;
+    right: 24px;
+    top: 100px;
+    bottom: 100px;
+    width: 28px;
+    z-index: 40;
+    pointer-events: none;
+  }
+  .scroll-snake__track {
+    position: absolute;
+    left: 50%;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(232,237,228,0.12) 12%, rgba(232,237,228,0.12) 88%, transparent);
+    transform: translateX(-50%);
+  }
+  .scroll-snake__body {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 20px;
+    height: 56px;
+    transform-origin: 50% 10%;  /* pivot near the head for natural rotation */
+    transform: translate(-50%, 0);
+    color: #4ADE80;
+    will-change: transform;
+  }
+  .scroll-snake__body svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 0 8px rgba(74,222,128,0.55)); }
+  .scroll-snake__body .snake-wave { stroke-dasharray: 4 2; animation: snake-dash 1.6s linear infinite paused; }
+  .scroll-snake__body.is-moving .snake-wave { animation-play-state: running; }
+  @keyframes snake-dash { to { stroke-dashoffset: -12; } }
+
+  /* Section anchor offset for sticky header */
+  section[id] { scroll-margin-top: 80px; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ PARALLAX JUNGLE (3 LAYERS) -->
+<!-- Far layer: very distant, misty, lighter canopy — aerial perspective -->
+<div id="jungle-far" class="jungle-layer" aria-hidden="true">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice" style="width:100%;height:100%;display:block">
+    <defs>
+      <linearGradient id="farSky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="#2f6645"/>
+        <stop offset="45%" stop-color="#1c4128"/>
+        <stop offset="100%" stop-color="#0a1f13"/>
+      </linearGradient>
+      <radialGradient id="farMist" cx="50%" cy="55%" r="65%">
+        <stop offset="0%" stop-color="rgba(180,220,180,0.22)"/>
+        <stop offset="70%" stop-color="rgba(180,220,180,0.04)"/>
+        <stop offset="100%" stop-color="rgba(180,220,180,0)"/>
+      </radialGradient>
+    </defs>
+    <rect width="1440" height="900" fill="url(#farSky)"/>
+    <rect width="1440" height="900" fill="url(#farMist)"/>
+    <!-- far mountain silhouettes — lighter, soft curves -->
+    <polygon points="0,540 180,430 360,510 530,410 690,490 860,400 1030,480 1200,390 1360,470 1440,420 1440,900 0,900" fill="#2a5738" opacity="0.55"/>
+    <polygon points="0,640 160,550 320,610 480,530 640,600 810,520 970,590 1140,510 1290,580 1440,540 1440,900 0,900" fill="#1e4229" opacity="0.75"/>
+    <g fill="#a3d8a0" opacity="0.35">
+      <circle cx="220" cy="470" r="1.4"/>
+      <circle cx="540" cy="510" r="1"/>
+      <circle cx="860" cy="460" r="1.2"/>
+      <circle cx="1180" cy="500" r="1"/>
+    </g>
+  </svg>
+</div>
+
+<!-- Mid layer: the main jungle SVG, medium parallax -->
+<div id="jungle-mid" class="jungle-layer" aria-hidden="true"></div>
+
+<!-- Near layer: HUGE dark foreground trees + floor — high contrast, fastest parallax -->
+<div id="jungle-near" class="jungle-layer" aria-hidden="true">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice" style="width:100%;height:100%;display:block">
+    <!-- Massive tree trunks on the sides (frame the content) -->
+    <g fill="#010603">
+      <!-- Left trunk -->
+      <polygon points="0,900 0,200 45,190 80,210 110,240 90,330 105,440 85,560 100,680 75,820 55,900"/>
+      <polygon points="0,350 45,340 55,380 30,420 0,430"/>
+      <polygon points="0,620 40,615 55,660 25,690 0,680"/>
+      <!-- Right trunk -->
+      <polygon points="1440,900 1440,180 1395,170 1360,195 1335,240 1355,340 1340,460 1360,580 1345,700 1370,830 1390,900"/>
+      <polygon points="1440,320 1400,310 1390,350 1415,390 1440,395"/>
+      <polygon points="1440,640 1405,630 1395,680 1420,710 1440,700"/>
+    </g>
+
+    <!-- Big foreground tree silhouettes (low-poly, dark) -->
+    <g fill="#020806">
+      <polygon points="130,900 240,480 350,900"/>
+      <polygon points="390,900 500,510 610,900"/>
+      <polygon points="650,900 780,470 910,900"/>
+      <polygon points="950,900 1070,490 1190,900"/>
+      <polygon points="1210,900 1320,500 1410,900"/>
+    </g>
+
+    <!-- Even nearer detail leaves (hanging foliage silhouettes in corners) -->
+    <g fill="#010603">
+      <ellipse cx="95" cy="60" rx="90" ry="45"/>
+      <ellipse cx="50" cy="130" rx="70" ry="35"/>
+      <ellipse cx="1350" cy="50" rx="110" ry="50"/>
+      <ellipse cx="1390" cy="130" rx="75" ry="40"/>
+    </g>
+
+    <!-- Floor bumps, pitch-black -->
+    <g fill="#000402">
+      <polygon points="0,900 0,820 180,790 360,820 540,795 720,825 900,790 1080,820 1260,795 1440,820 1440,900"/>
+    </g>
+  </svg>
+</div>
+
+<div class="jungle-overlay" aria-hidden="true"></div>
+
+<!-- ============================================================ HANGING VINES -->
+<!-- ============================================================ PENDANT VINES (inside viewport) -->
+<div class="vine vine-pendant" style="left: 18%; width: 52px;" data-speed="0.32" aria-hidden="true">
+  <svg viewBox="0 0 52 500" preserveAspectRatio="xMinYMin slice">
+    <path d="M 30 -10 Q 10 80 28 150 T 14 280 T 30 400 T 22 520" stroke="#0a1f13" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <g fill="#1e4a2d" stroke="#08190e" stroke-width="0.7">
+      <ellipse cx="12" cy="70"  rx="14" ry="5.5" transform="rotate(-25 12 70)"/>
+      <ellipse cx="32" cy="150" rx="16" ry="6.5" transform="rotate(30 32 150)"/>
+      <ellipse cx="10" cy="230" rx="14" ry="5.5" transform="rotate(-28 10 230)"/>
+      <ellipse cx="34" cy="310" rx="17" ry="7"   transform="rotate(32 34 310)"/>
+      <ellipse cx="14" cy="400" rx="15" ry="6"   transform="rotate(-30 14 400)"/>
+      <ellipse cx="30" cy="480" rx="14" ry="5.5" transform="rotate(28 30 480)"/>
+    </g>
+    <g fill="#4ade80" opacity="0.3">
+      <circle cx="32" cy="150" r="1.3"/>
+      <circle cx="34" cy="310" r="1.4"/>
+    </g>
+  </svg>
+</div>
+
+<div class="vine vine-pendant" style="left: 30%; width: 40px; opacity: 0.8;" data-speed="0.26" aria-hidden="true">
+  <svg viewBox="0 0 40 500" preserveAspectRatio="xMinYMin slice">
+    <path d="M 22 -15 Q 6 70 20 140 T 8 260 T 24 380 T 14 500" stroke="#0a1f13" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <g fill="#1c4128" stroke="#08190e" stroke-width="0.6">
+      <ellipse cx="8"  cy="55"  rx="11" ry="4.5" transform="rotate(-28 8 55)"/>
+      <ellipse cx="24" cy="130" rx="12" ry="5"   transform="rotate(30 24 130)"/>
+      <ellipse cx="6"  cy="210" rx="11" ry="4.5" transform="rotate(-25 6 210)"/>
+      <ellipse cx="26" cy="290" rx="13" ry="5"   transform="rotate(32 26 290)"/>
+      <ellipse cx="10" cy="370" rx="11" ry="4.5" transform="rotate(-30 10 370)"/>
+      <ellipse cx="22" cy="450" rx="12" ry="5"   transform="rotate(28 22 450)"/>
+    </g>
+  </svg>
+</div>
+
+<div class="vine vine-pendant" style="left: 38%; width: 34px; opacity: 0.72; height: 42vh;" data-speed="0.48" aria-hidden="true">
+  <svg viewBox="0 0 34 420" preserveAspectRatio="xMinYMin slice">
+    <path d="M 18 -10 Q 30 60 14 130 T 20 250 T 12 360" stroke="#0a1f13" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <g fill="#1e4a2d" stroke="#08190e" stroke-width="0.5">
+      <ellipse cx="26" cy="50"  rx="9" ry="3.5" transform="rotate(25 26 50)"/>
+      <ellipse cx="10" cy="130" rx="10" ry="4"  transform="rotate(-28 10 130)"/>
+      <ellipse cx="24" cy="210" rx="9" ry="3.5" transform="rotate(30 24 210)"/>
+      <ellipse cx="12" cy="290" rx="10" ry="4"  transform="rotate(-25 12 290)"/>
+      <ellipse cx="22" cy="370" rx="9" ry="3.5" transform="rotate(28 22 370)"/>
+    </g>
+  </svg>
+</div>
+
+<div class="vine vine-pendant" style="left: 60%; width: 34px; opacity: 0.72; height: 48vh;" data-speed="0.44" aria-hidden="true">
+  <svg viewBox="0 0 34 460" preserveAspectRatio="xMinYMin slice">
+    <path d="M 16 -10 Q 4 70 18 140 T 8 270 T 22 400" stroke="#0a1f13" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <g fill="#1e4a2d" stroke="#08190e" stroke-width="0.5">
+      <ellipse cx="8"  cy="60"  rx="9" ry="3.5" transform="rotate(-28 8 60)"/>
+      <ellipse cx="22" cy="140" rx="10" ry="4"  transform="rotate(32 22 140)"/>
+      <ellipse cx="6"  cy="220" rx="9" ry="3.5" transform="rotate(-25 6 220)"/>
+      <ellipse cx="24" cy="300" rx="10" ry="4"  transform="rotate(30 24 300)"/>
+      <ellipse cx="10" cy="400" rx="9" ry="3.5" transform="rotate(-28 10 400)"/>
+    </g>
+  </svg>
+</div>
+
+<div class="vine vine-pendant" style="left: 68%; width: 40px; opacity: 0.82;" data-speed="0.30" aria-hidden="true">
+  <svg viewBox="0 0 40 500" preserveAspectRatio="xMinYMin slice">
+    <path d="M 20 -15 Q 34 80 18 150 T 30 280 T 14 400 T 26 520" stroke="#0a1f13" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <g fill="#1c4128" stroke="#08190e" stroke-width="0.6">
+      <ellipse cx="32" cy="60"  rx="11" ry="4.5" transform="rotate(28 32 60)"/>
+      <ellipse cx="14" cy="140" rx="12" ry="5"   transform="rotate(-30 14 140)"/>
+      <ellipse cx="30" cy="220" rx="11" ry="4.5" transform="rotate(25 30 220)"/>
+      <ellipse cx="12" cy="300" rx="13" ry="5"   transform="rotate(-32 12 300)"/>
+      <ellipse cx="28" cy="380" rx="11" ry="4.5" transform="rotate(28 28 380)"/>
+      <ellipse cx="16" cy="460" rx="12" ry="5"   transform="rotate(-30 16 460)"/>
+    </g>
+  </svg>
+</div>
+
+<div class="vine vine-pendant" style="left: 80%; width: 52px;" data-speed="0.34" aria-hidden="true">
+  <svg viewBox="0 0 52 500" preserveAspectRatio="xMinYMin slice">
+    <path d="M 22 -10 Q 42 80 24 150 T 38 280 T 20 400 T 32 520" stroke="#0a1f13" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <g fill="#1e4a2d" stroke="#08190e" stroke-width="0.7">
+      <ellipse cx="40" cy="70"  rx="14" ry="5.5" transform="rotate(28 40 70)"/>
+      <ellipse cx="18" cy="150" rx="16" ry="6.5" transform="rotate(-30 18 150)"/>
+      <ellipse cx="38" cy="230" rx="14" ry="5.5" transform="rotate(25 38 230)"/>
+      <ellipse cx="16" cy="310" rx="17" ry="7"   transform="rotate(-32 16 310)"/>
+      <ellipse cx="36" cy="400" rx="15" ry="6"   transform="rotate(30 36 400)"/>
+      <ellipse cx="18" cy="480" rx="14" ry="5.5" transform="rotate(-28 18 480)"/>
+    </g>
+    <g fill="#4ade80" opacity="0.3">
+      <circle cx="40" cy="70"  r="1.3"/>
+      <circle cx="36" cy="400" r="1.4"/>
+    </g>
+  </svg>
+</div>
+
+<!-- Extra mid vine left-center -->
+<div class="vine vine-thin vine-left" data-speed="0.34" style="left: 220px; top: -8vh; width: 50px; opacity: 0.7;" aria-hidden="true">
+  <svg viewBox="0 0 50 1400" preserveAspectRatio="xMinYMin slice">
+    <path d="M 22 -20 Q 5 110 20 230 T 8 460 T 24 690 T 6 910 T 22 1140 T 10 1360" stroke="#0a1f13" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <g fill="#1c4128" stroke="#08190e" stroke-width="0.5">
+      <ellipse cx="8"  cy="100" rx="8" ry="3" transform="rotate(-25 8 100)"/>
+      <ellipse cx="24" cy="220" rx="9" ry="3.5" transform="rotate(30 24 220)"/>
+      <ellipse cx="6"  cy="360" rx="8" ry="3" transform="rotate(-28 6 360)"/>
+      <ellipse cx="24" cy="500" rx="9" ry="3.5" transform="rotate(28 24 500)"/>
+      <ellipse cx="8"  cy="640" rx="8" ry="3" transform="rotate(-30 8 640)"/>
+      <ellipse cx="22" cy="780" rx="9" ry="3.5" transform="rotate(25 22 780)"/>
+      <ellipse cx="6"  cy="920" rx="8" ry="3" transform="rotate(-28 6 920)"/>
+      <ellipse cx="24" cy="1060" rx="9" ry="3.5" transform="rotate(32 24 1060)"/>
+      <ellipse cx="8"  cy="1200" rx="8" ry="3" transform="rotate(-25 8 1200)"/>
+    </g>
+  </svg>
+</div>
+
+<!-- Extra mid vine right-center -->
+<div class="vine vine-thin vine-right" data-speed="0.38" style="right: 240px; top: -6vh; width: 50px; opacity: 0.72;" aria-hidden="true">
+  <svg viewBox="0 0 50 1400" preserveAspectRatio="xMinYMin slice">
+    <path d="M 26 -30 Q 8 120 24 250 T 10 480 T 26 710 T 8 940 T 24 1170 T 12 1380" stroke="#0a1f13" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <g fill="#1c4128" stroke="#08190e" stroke-width="0.5">
+      <ellipse cx="10" cy="120" rx="8" ry="3" transform="rotate(28 10 120)"/>
+      <ellipse cx="28" cy="260" rx="9" ry="3.5" transform="rotate(-32 28 260)"/>
+      <ellipse cx="8"  cy="400" rx="8" ry="3" transform="rotate(25 8 400)"/>
+      <ellipse cx="26" cy="540" rx="9" ry="3.5" transform="rotate(-28 26 540)"/>
+      <ellipse cx="10" cy="680" rx="8" ry="3" transform="rotate(30 10 680)"/>
+      <ellipse cx="26" cy="820" rx="9" ry="3.5" transform="rotate(-25 26 820)"/>
+      <ellipse cx="8"  cy="960" rx="8" ry="3" transform="rotate(28 8 960)"/>
+      <ellipse cx="26" cy="1100" rx="9" ry="3.5" transform="rotate(-30 26 1100)"/>
+    </g>
+  </svg>
+</div>
+
+<!-- Extra deep outer vine far left -->
+<div class="vine vine-outer vine-left" data-speed="0.10" style="left: 40px; width: 60px; opacity: 0.42; top: -12vh;" aria-hidden="true">
+  <svg viewBox="0 0 60 1400" preserveAspectRatio="xMinYMin slice">
+    <path d="M 18 -40 Q 38 150 16 310 T 30 620 T 12 930 T 28 1240 T 18 1500" stroke="#08190e" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <g fill="#143220" stroke="#08190e" stroke-width="0.5">
+      <ellipse cx="22" cy="180" rx="6" ry="2.5" transform="rotate(20 22 180)"/>
+      <ellipse cx="14" cy="380" rx="6" ry="2.5" transform="rotate(-25 14 380)"/>
+      <ellipse cx="26" cy="580" rx="7" ry="3" transform="rotate(25 26 580)"/>
+      <ellipse cx="12" cy="780" rx="6" ry="2.5" transform="rotate(-28 12 780)"/>
+      <ellipse cx="24" cy="980" rx="6" ry="2.5" transform="rotate(22 24 980)"/>
+      <ellipse cx="14" cy="1180" rx="6" ry="2.5" transform="rotate(-25 14 1180)"/>
+    </g>
+  </svg>
+</div>
+
+<!-- Extra deep outer vine far right -->
+<div class="vine vine-outer vine-right vine-mirror" data-speed="0.12" style="right: 60px; width: 60px; opacity: 0.4; top: -10vh;" aria-hidden="true">
+  <svg viewBox="0 0 60 1400" preserveAspectRatio="xMinYMin slice">
+    <path d="M 22 -30 Q 44 160 20 320 T 34 640 T 14 950 T 32 1260 T 18 1520" stroke="#08190e" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <g fill="#143220" stroke="#08190e" stroke-width="0.5">
+      <ellipse cx="28" cy="200" rx="6" ry="2.5" transform="rotate(-22 28 200)"/>
+      <ellipse cx="16" cy="400" rx="6" ry="2.5" transform="rotate(28 16 400)"/>
+      <ellipse cx="30" cy="600" rx="7" ry="3" transform="rotate(-25 30 600)"/>
+      <ellipse cx="14" cy="800" rx="6" ry="2.5" transform="rotate(25 14 800)"/>
+      <ellipse cx="28" cy="1000" rx="6" ry="2.5" transform="rotate(-22 28 1000)"/>
+      <ellipse cx="16" cy="1200" rx="6" ry="2.5" transform="rotate(28 16 1200)"/>
+    </g>
+  </svg>
+</div>
+
+<!-- Thin inner vine left (nearer, fastest parallax) -->
+<div class="vine vine-thin vine-left" data-speed="0.40" style="left: 120px; top: -5vh;" aria-hidden="true">
+  <svg viewBox="0 0 60 1400" preserveAspectRatio="xMinYMin slice">
+    <path d="M 20 -20 Q 40 100 15 220 T 25 440 T 12 660 T 28 880 T 14 1100 T 26 1320" stroke="#0a1f13" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <g fill="#1c4128" stroke="#08190e" stroke-width="0.6">
+      <ellipse cx="30" cy="120" rx="10" ry="4" transform="rotate(25 30 120)"/>
+      <ellipse cx="12" cy="260" rx="9"  ry="3.5" transform="rotate(-30 12 260)"/>
+      <ellipse cx="32" cy="420" rx="11" ry="4" transform="rotate(28 32 420)"/>
+      <ellipse cx="10" cy="580" rx="9"  ry="3.5" transform="rotate(-28 10 580)"/>
+      <ellipse cx="30" cy="740" rx="10" ry="4" transform="rotate(30 30 740)"/>
+      <ellipse cx="14" cy="900" rx="9"  ry="3.5" transform="rotate(-25 14 900)"/>
+      <ellipse cx="28" cy="1060" rx="10" ry="4" transform="rotate(28 28 1060)"/>
+      <ellipse cx="12" cy="1220" rx="9"  ry="3.5" transform="rotate(-30 12 1220)"/>
+    </g>
+  </svg>
+</div>
+
+<!-- Outer small vine far left (background, slowest) -->
+<div class="vine vine-outer vine-left" data-speed="0.18" style="left: -10px; opacity: 0.55;" aria-hidden="true">
+  <svg viewBox="0 0 80 1400" preserveAspectRatio="xMinYMin slice">
+    <path d="M 15 -30 Q 38 120 18 260 T 28 520 T 14 780 T 30 1040 T 18 1300" stroke="#0a1f13" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <g fill="#143220" stroke="#08190e" stroke-width="0.5">
+      <ellipse cx="26" cy="150" rx="8" ry="3" transform="rotate(20 26 150)"/>
+      <ellipse cx="14" cy="330" rx="7" ry="3" transform="rotate(-25 14 330)"/>
+      <ellipse cx="30" cy="510" rx="9" ry="3.5" transform="rotate(25 30 510)"/>
+      <ellipse cx="12" cy="690" rx="7" ry="3" transform="rotate(-30 12 690)"/>
+      <ellipse cx="28" cy="870" rx="8" ry="3" transform="rotate(22 28 870)"/>
+      <ellipse cx="14" cy="1050" rx="7" ry="3" transform="rotate(-28 14 1050)"/>
+      <ellipse cx="28" cy="1230" rx="8" ry="3" transform="rotate(25 28 1230)"/>
+    </g>
+  </svg>
+</div>
+
+<!-- Outer small vine far right -->
+<div class="vine vine-outer vine-right vine-mirror" data-speed="0.15" style="right: -20px; opacity: 0.5;" aria-hidden="true">
+  <svg viewBox="0 0 80 1400" preserveAspectRatio="xMinYMin slice">
+    <path d="M 18 -20 Q 42 130 22 270 T 16 530 T 30 790 T 14 1050 T 28 1310" stroke="#0a1f13" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <g fill="#143220" stroke="#08190e" stroke-width="0.5">
+      <ellipse cx="32" cy="170" rx="8" ry="3" transform="rotate(-22 32 170)"/>
+      <ellipse cx="16" cy="350" rx="7" ry="3" transform="rotate(28 16 350)"/>
+      <ellipse cx="34" cy="530" rx="9" ry="3.5" transform="rotate(-28 34 530)"/>
+      <ellipse cx="14" cy="710" rx="7" ry="3" transform="rotate(25 14 710)"/>
+      <ellipse cx="30" cy="890" rx="8" ry="3" transform="rotate(-22 30 890)"/>
+      <ellipse cx="16" cy="1070" rx="7" ry="3" transform="rotate(28 16 1070)"/>
+    </g>
+  </svg>
+</div>
+
+<!-- Thin inner vine right (nearer) -->
+<div class="vine vine-thin vine-right" data-speed="0.44" style="right: 150px; top: -4vh;" aria-hidden="true">
+  <svg viewBox="0 0 60 1400" preserveAspectRatio="xMinYMin slice">
+    <path d="M 30 -20 Q 10 120 26 240 T 14 460 T 28 680 T 12 900 T 26 1120 T 14 1340" stroke="#0a1f13" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <g fill="#1c4128" stroke="#08190e" stroke-width="0.6">
+      <ellipse cx="16" cy="130" rx="10" ry="4" transform="rotate(-25 16 130)"/>
+      <ellipse cx="32" cy="280" rx="9"  ry="3.5" transform="rotate(30 32 280)"/>
+      <ellipse cx="14" cy="440" rx="11" ry="4" transform="rotate(-28 14 440)"/>
+      <ellipse cx="34" cy="600" rx="9"  ry="3.5" transform="rotate(25 34 600)"/>
+      <ellipse cx="12" cy="760" rx="10" ry="4" transform="rotate(-30 12 760)"/>
+      <ellipse cx="32" cy="920" rx="9"  ry="3.5" transform="rotate(28 32 920)"/>
+      <ellipse cx="14" cy="1080" rx="10" ry="4" transform="rotate(-25 14 1080)"/>
+      <ellipse cx="30" cy="1240" rx="9"  ry="3.5" transform="rotate(30 30 1240)"/>
+    </g>
+  </svg>
+</div>
+
+<div class="vine vine-wide vine-left" data-speed="0.28" aria-hidden="true">
+  <svg viewBox="0 0 110 1400" preserveAspectRatio="xMinYMin slice">
+    <defs>
+      <linearGradient id="vineGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%"   stop-color="#1c4128"/>
+        <stop offset="100%" stop-color="#08190e"/>
+      </linearGradient>
+      <filter id="leafGlow"><feGaussianBlur stdDeviation="0.8"/></filter>
+    </defs>
+
+    <!-- Main vine stem: organic bezier curve swaying down the left edge -->
+    <path d="M 18 -30
+             C 55 70, 10 170, 35 280
+             C 60 380, 5 490, 30 600
+             C 55 700, 8 810, 32 920
+             C 58 1020, 12 1140, 40 1260
+             C 60 1340, 20 1420, 30 1500"
+          stroke="url(#vineGrad)"
+          stroke-width="5"
+          fill="none"
+          stroke-linecap="round"/>
+
+    <!-- Smaller offshoot tendrils -->
+    <path d="M 35 280 q 20 -15 28 -5" stroke="#163c24" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 30 600 q 25 -20 30 -2"  stroke="#163c24" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 32 920 q 22 -18 30 0"   stroke="#163c24" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 40 1260 q 22 -15 32 -2" stroke="#163c24" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <!-- Leaves — organic ellipses with central vein -->
+    <g>
+      <g transform="translate(35 60) rotate(25)">
+        <ellipse cx="0" cy="0" rx="22" ry="9"   fill="#1e4a2d" stroke="#08190e" stroke-width="0.8"/>
+        <path    d="M -20 0 L 22 0"             stroke="#08190e" stroke-width="0.6"/>
+      </g>
+      <g transform="translate(18 150) rotate(-30)">
+        <ellipse cx="0" cy="0" rx="18" ry="7"   fill="#1c4128" stroke="#08190e" stroke-width="0.8"/>
+        <path    d="M -16 0 L 18 0"             stroke="#08190e" stroke-width="0.6"/>
+      </g>
+      <g transform="translate(42 250) rotate(32)">
+        <ellipse cx="0" cy="0" rx="24" ry="10"  fill="#1e4a2d" stroke="#08190e" stroke-width="0.8"/>
+        <path    d="M -22 0 L 24 0"             stroke="#08190e" stroke-width="0.6"/>
+      </g>
+      <g transform="translate(20 360) rotate(-28)">
+        <ellipse cx="0" cy="0" rx="20" ry="8"   fill="#163c24" stroke="#08190e" stroke-width="0.8"/>
+        <path    d="M -18 0 L 20 0"             stroke="#08190e" stroke-width="0.6"/>
+      </g>
+      <g transform="translate(45 460) rotate(28)">
+        <ellipse cx="0" cy="0" rx="23" ry="9"   fill="#1e4a2d" stroke="#08190e" stroke-width="0.8"/>
+        <path    d="M -21 0 L 23 0"             stroke="#08190e" stroke-width="0.6"/>
+      </g>
+      <g transform="translate(22 570) rotate(-32)">
+        <ellipse cx="0" cy="0" rx="19" ry="7.5" fill="#1c4128" stroke="#08190e" stroke-width="0.8"/>
+        <path    d="M -17 0 L 19 0"             stroke="#08190e" stroke-width="0.6"/>
+      </g>
+      <g transform="translate(48 680) rotate(25)">
+        <ellipse cx="0" cy="0" rx="22" ry="9"   fill="#1e4a2d" stroke="#08190e" stroke-width="0.8"/>
+        <path    d="M -20 0 L 22 0"             stroke="#08190e" stroke-width="0.6"/>
+      </g>
+      <g transform="translate(20 790) rotate(-30)">
+        <ellipse cx="0" cy="0" rx="20" ry="8"   fill="#163c24" stroke="#08190e" stroke-width="0.8"/>
+        <path    d="M -18 0 L 20 0"             stroke="#08190e" stroke-width="0.6"/>
+      </g>
+      <g transform="translate(46 900) rotate(30)">
+        <ellipse cx="0" cy="0" rx="24" ry="10"  fill="#1e4a2d" stroke="#08190e" stroke-width="0.8"/>
+        <path    d="M -22 0 L 24 0"             stroke="#08190e" stroke-width="0.6"/>
+      </g>
+      <g transform="translate(25 1010) rotate(-28)">
+        <ellipse cx="0" cy="0" rx="19" ry="7.5" fill="#1c4128" stroke="#08190e" stroke-width="0.8"/>
+        <path    d="M -17 0 L 19 0"             stroke="#08190e" stroke-width="0.6"/>
+      </g>
+      <g transform="translate(50 1120) rotate(32)">
+        <ellipse cx="0" cy="0" rx="23" ry="9"   fill="#1e4a2d" stroke="#08190e" stroke-width="0.8"/>
+        <path    d="M -21 0 L 23 0"             stroke="#08190e" stroke-width="0.6"/>
+      </g>
+      <g transform="translate(28 1230) rotate(-32)">
+        <ellipse cx="0" cy="0" rx="20" ry="8"   fill="#163c24" stroke="#08190e" stroke-width="0.8"/>
+        <path    d="M -18 0 L 20 0"             stroke="#08190e" stroke-width="0.6"/>
+      </g>
+    </g>
+
+    <!-- Phosphor accent highlights on a few leaves -->
+    <g fill="#4ade80" filter="url(#leafGlow)" opacity="0.35">
+      <circle cx="42" cy="255" r="1.6"/>
+      <circle cx="45" cy="465" r="1.4"/>
+      <circle cx="48" cy="685" r="1.6"/>
+      <circle cx="46" cy="905" r="1.4"/>
+      <circle cx="50" cy="1125" r="1.6"/>
+    </g>
+  </svg>
+</div>
+
+<div class="vine vine-wide vine-right vine-mirror" data-speed="0.22" aria-hidden="true">
+  <svg viewBox="0 0 110 1400" preserveAspectRatio="xMinYMin slice">
+    <defs>
+      <linearGradient id="vineGrad2" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%"   stop-color="#1c4128"/>
+        <stop offset="100%" stop-color="#08190e"/>
+      </linearGradient>
+    </defs>
+    <!-- Different curve for variation -->
+    <path d="M 22 -40
+             C 50 90, 8 200, 36 310
+             C 62 420, 12 520, 38 630
+             C 60 730, 15 840, 40 950
+             C 62 1050, 18 1170, 44 1290
+             C 62 1370, 22 1440, 38 1520"
+          stroke="url(#vineGrad2)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M 36 310 q 22 -14 30 -3" stroke="#163c24" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 38 630 q 24 -18 32 -1" stroke="#163c24" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 40 950 q 22 -16 30 -2" stroke="#163c24" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <g>
+      <g transform="translate(38 80) rotate(-28)"><ellipse rx="22" ry="9"  fill="#1e4a2d" stroke="#08190e" stroke-width="0.8"/><path d="M -20 0 L 22 0" stroke="#08190e" stroke-width="0.6"/></g>
+      <g transform="translate(20 180) rotate(32)"><ellipse rx="20" ry="8"  fill="#1c4128" stroke="#08190e" stroke-width="0.8"/><path d="M -18 0 L 20 0" stroke="#08190e" stroke-width="0.6"/></g>
+      <g transform="translate(46 290) rotate(-30)"><ellipse rx="23" ry="9.5" fill="#1e4a2d" stroke="#08190e" stroke-width="0.8"/><path d="M -21 0 L 23 0" stroke="#08190e" stroke-width="0.6"/></g>
+      <g transform="translate(24 400) rotate(28)"><ellipse rx="19" ry="7.5" fill="#163c24" stroke="#08190e" stroke-width="0.8"/><path d="M -17 0 L 19 0" stroke="#08190e" stroke-width="0.6"/></g>
+      <g transform="translate(48 510) rotate(-32)"><ellipse rx="24" ry="10" fill="#1e4a2d" stroke="#08190e" stroke-width="0.8"/><path d="M -22 0 L 24 0" stroke="#08190e" stroke-width="0.6"/></g>
+      <g transform="translate(26 620) rotate(30)"><ellipse rx="20" ry="8"  fill="#1c4128" stroke="#08190e" stroke-width="0.8"/><path d="M -18 0 L 20 0" stroke="#08190e" stroke-width="0.6"/></g>
+      <g transform="translate(50 730) rotate(-28)"><ellipse rx="22" ry="9"  fill="#1e4a2d" stroke="#08190e" stroke-width="0.8"/><path d="M -20 0 L 22 0" stroke="#08190e" stroke-width="0.6"/></g>
+      <g transform="translate(28 840) rotate(32)"><ellipse rx="19" ry="7.5" fill="#163c24" stroke="#08190e" stroke-width="0.8"/><path d="M -17 0 L 19 0" stroke="#08190e" stroke-width="0.6"/></g>
+      <g transform="translate(52 950) rotate(-30)"><ellipse rx="24" ry="10" fill="#1e4a2d" stroke="#08190e" stroke-width="0.8"/><path d="M -22 0 L 24 0" stroke="#08190e" stroke-width="0.6"/></g>
+      <g transform="translate(30 1060) rotate(28)"><ellipse rx="20" ry="8"  fill="#1c4128" stroke="#08190e" stroke-width="0.8"/><path d="M -18 0 L 20 0" stroke="#08190e" stroke-width="0.6"/></g>
+      <g transform="translate(54 1170) rotate(-32)"><ellipse rx="22" ry="9"  fill="#1e4a2d" stroke="#08190e" stroke-width="0.8"/><path d="M -20 0 L 22 0" stroke="#08190e" stroke-width="0.6"/></g>
+      <g transform="translate(32 1280) rotate(30)"><ellipse rx="19" ry="7.5" fill="#163c24" stroke="#08190e" stroke-width="0.8"/><path d="M -17 0 L 19 0" stroke="#08190e" stroke-width="0.6"/></g>
+    </g>
+    <g fill="#4ade80" opacity="0.35">
+      <circle cx="46" cy="295" r="1.6"/>
+      <circle cx="48" cy="515" r="1.4"/>
+      <circle cx="50" cy="735" r="1.6"/>
+      <circle cx="52" cy="955" r="1.4"/>
+    </g>
+  </svg>
+</div>
+
+<!-- ============================================================ CUSTOM SNAKE SCROLLBAR -->
+<div class="scroll-snake" aria-hidden="true">
+  <div class="scroll-snake__track"></div>
+  <div class="scroll-snake__body" id="scroll-snake-body">
+    <svg viewBox="0 0 20 56" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Static S-shaped body (no morphing) -->
+      <path id="scroll-snake-path" d="M 10 4 C 3 12, 17 20, 10 28 C 3 36, 17 44, 10 50" />
+      <!-- Head (leading end) -->
+      <circle cx="10" cy="50" r="2.8" fill="currentColor" stroke="none"/>
+      <!-- Eye -->
+      <circle cx="10.9" cy="49.4" r="0.55" fill="#0C110E" stroke="none"/>
+      <!-- Forked red tongue -->
+      <g stroke="#ef4444" stroke-width="0.9" stroke-linecap="round">
+        <path d="M 10 53 L 10 55.4" />
+        <path d="M 10 55.4 L 8.8 57" />
+        <path d="M 10 55.4 L 11.2 57" />
+      </g>
+    </svg>
+  </div>
+</div>
+
+<!-- ============================================================ HEADER -->
+<header class="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-bg/70 border-b border-line">
+  <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    <a href="#" class="flex items-center gap-3 group">
+      <div class="relative w-14 h-14">
+        <img src="../public/logo.svg" alt="Ouroboros Cyprien Brisset" class="w-full h-full object-contain spin-slow" />
+      </div>
+      <span class="font-display text-lg tracking-tight">Cyprien Brisset</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-8 text-sm text-ink-muted">
+      <a href="#projects" class="hover:text-ink transition-colors">Projets</a>
+      <a href="#stack" class="hover:text-ink transition-colors">Stack</a>
+      <a href="#about" class="hover:text-ink transition-colors">À propos</a>
+      <a href="#contact" class="hover:text-ink transition-colors">Contact</a>
+    </nav>
+    <a href="https://github.com/Alchim-IA" class="btn-primary !py-2 !px-4 !text-sm">
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.6.5.5 5.6.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2.9-.3 2-.4 3-.4s2.1.1 3 .4c2.3-1.6 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.9 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.2c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.6 18.4.5 12 .5z"/></svg>
+      GitHub
+    </a>
+  </div>
+</header>
+
+<!-- ============================================================ HERO -->
+<section class="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-16">
+  <!-- 3D snake (trefoil knot) — in hero only -->
+  <div class="hero-bg">
+    <canvas id="hero-canvas"></canvas>
+  </div>
+
+  <div class="hero-text-veil relative z-10 max-w-5xl mx-auto px-6 text-center">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-line bg-bg-alt/60 text-xs text-ink-muted font-mono mb-8">
+      <span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span>
+      Disponible pour de nouveaux projets
+    </div>
+    <h1 class="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl leading-[1.02] tracking-tight">
+      <span class="word">Je</span>
+      <span class="word">conçois</span>
+      <span class="word">des</span>
+      <span class="word">logiciels</span>
+      <span class="word italic text-accent">qu'on&nbsp;oublie.</span>
+    </h1>
+    <p class="mt-8 max-w-2xl mx-auto text-lg text-ink-muted leading-relaxed">
+      Tant ils sont rapides, fiables et bien pensés. Développeur indépendant, je
+      conçois et j'accompagne vos projets — de l'idée au déploiement — avec une
+      seule obsession : faire simple, utile, et durable.
+    </p>
+    <div class="mt-10 flex items-center justify-center gap-3">
+      <a href="#projects" class="btn-primary">
+        Voir les projets
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+      <a href="mailto:contact@cyprienbrisset.fr" class="btn-ghost">
+        Me contacter
+      </a>
+    </div>
+  </div>
+
+  <!-- Scroll indicator -->
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 text-ink-muted text-xs font-mono tracking-widest">
+    <div class="flex flex-col items-center gap-2">
+      <span>SCROLL</span>
+      <div class="w-px h-10 bg-gradient-to-b from-accent/60 to-transparent"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ DIVIDER -->
+<div class="flex items-center justify-center py-16">
+  <div class="flex-1 h-px bg-line max-w-xs"></div>
+  <svg class="divider-ring mx-6 text-accent/40" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1">
+    <circle cx="22" cy="22" r="20"/>
+    <circle cx="22" cy="22" r="14"/>
+  </svg>
+  <div class="flex-1 h-px bg-line max-w-xs"></div>
+</div>
+
+<!-- ============================================================ ABOUT -->
+<section id="about" class="py-24 section-veil">
+  <div class="max-w-5xl mx-auto px-6 space-y-24">
+
+    <!-- 01 PHILOSOPHIE -->
+    <div>
+      <div class="text-xs font-mono text-accent tracking-widest mb-4">01 — PHILOSOPHIE</div>
+      <h2 class="font-display text-4xl md:text-5xl leading-tight mb-6">
+        Les meilleurs logiciels sont ceux<br/>
+        <span class="italic text-accent">qu'on oublie.</span>
+      </h2>
+      <p class="text-ink-muted text-lg leading-relaxed max-w-3xl mb-6">
+        Ils font ce qu'ils promettent — rapidement, sans bruit, sans friction — et vous
+        laissent vous concentrer sur votre métier. Je conçois et j'accompagne vos projets
+        avec une seule obsession : faire simple, utile, et durable.
+      </p>
+      <ul class="grid md:grid-cols-3 gap-6 text-sm text-ink-muted">
+        <li class="border-l border-accent/40 pl-4">
+          <div class="text-ink font-medium mb-1">Rapide &amp; fiable</div>
+          Des interfaces qui répondent instantanément, un code qui tient dans le temps.
+        </li>
+        <li class="border-l border-accent/40 pl-4">
+          <div class="text-ink font-medium mb-1">Pensé pour vos utilisateurs</div>
+          Chaque décision part de leur besoin réel, pas d'une mode ou d'un buzzword.
+        </li>
+        <li class="border-l border-accent/40 pl-4">
+          <div class="text-ink font-medium mb-1">Respect &amp; maîtrise</div>
+          Vos données, votre infrastructure, votre code — vous en gardez le contrôle.
+        </li>
+      </ul>
+      <p class="mt-8 text-sm text-ink-muted italic max-w-2xl">
+        Chaque projet est pensé comme une boucle d'amélioration continue,
+        inspirée de l'ouroboros : écouter, concevoir, livrer, affiner, recommencer.
+      </p>
+    </div>
+
+    <!-- 02 APPROCHE -->
+    <div>
+      <div class="text-xs font-mono text-accent tracking-widest mb-4">02 — APPROCHE</div>
+      <h2 class="font-display text-4xl md:text-5xl leading-tight mb-6">
+        Simple, mais <span class="italic text-accent">exigeant.</span>
+      </h2>
+      <p class="text-ink-muted text-lg leading-relaxed max-w-3xl mb-8">
+        Faire une seule chose, mais la faire parfaitement — pour vous. Chaque projet commence
+        par comprendre votre besoin réel, pas par empiler des fonctionnalités.
+      </p>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="rounded-xl border border-line bg-bg-elev/50 p-6">
+          <div class="font-display text-2xl mb-2">Des interfaces claires</div>
+          <p class="text-sm text-ink-muted leading-relaxed">Sans bruit, sans friction. L'utilisateur trouve ce qu'il cherche en moins de 3 secondes.</p>
+        </div>
+        <div class="rounded-xl border border-line bg-bg-elev/50 p-6">
+          <div class="font-display text-2xl mb-2">Des performances mesurées</div>
+          <p class="text-sm text-ink-muted leading-relaxed">Pas estimées. Profiling, benchmarks, budgets Lighthouse : chaque ms compte pour vos utilisateurs.</p>
+        </div>
+        <div class="rounded-xl border border-line bg-bg-elev/50 p-6">
+          <div class="font-display text-2xl mb-2">Du code maintenable</div>
+          <p class="text-sm text-ink-muted leading-relaxed">Testé, documenté, facile à faire évoluer. Vous ne repartez pas de zéro dans 2 ans.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 03 STACK & EXPERTISE -->
+    <div>
+      <div class="text-xs font-mono text-accent tracking-widest mb-4">03 — STACK & EXPERTISE</div>
+      <h2 class="font-display text-4xl md:text-5xl leading-tight mb-8">
+        Les bons outils<br/>
+        pour <span class="italic text-accent">votre projet.</span>
+      </h2>
+      <div class="space-y-4 text-base max-w-3xl">
+        <div class="flex gap-4 items-baseline border-b border-line pb-3">
+          <span class="font-mono text-accent text-sm shrink-0 w-40">Web moderne</span>
+          <span class="text-ink-muted">Next.js, TypeScript, Tailwind — sites et apps rapides, SEO excellent, accessibles.</span>
+        </div>
+        <div class="flex gap-4 items-baseline border-b border-line pb-3">
+          <span class="font-mono text-accent text-sm shrink-0 w-40">Desktop natif</span>
+          <span class="text-ink-muted">Rust + Tauri pour des apps légères et performantes, une fraction du poids d'Electron.</span>
+        </div>
+        <div class="flex gap-4 items-baseline border-b border-line pb-3">
+          <span class="font-mono text-accent text-sm shrink-0 w-40">Backend &amp; données</span>
+          <span class="text-ink-muted">Node, TypeScript, PostgreSQL, SQLite — des architectures simples, robustes, maintenables.</span>
+        </div>
+        <div class="flex gap-4 items-baseline border-b border-line pb-3">
+          <span class="font-mono text-accent text-sm shrink-0 w-40">Accompagnement</span>
+          <span class="text-ink-muted">De l'idée au déploiement : cadrage, architecture, dev, livraison, évolution.</span>
+        </div>
+        <div class="flex gap-4 items-baseline">
+          <span class="font-mono text-accent text-sm shrink-0 w-40">IA (si pertinent)</span>
+          <span class="text-ink-muted">Quand elle apporte une vraie valeur. Locale ou cloud, selon vos contraintes — jamais pour le buzz.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================ PROJECTS -->
+<section id="projects" class="py-24 section-veil-tint">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="flex items-end justify-between mb-12">
+      <div>
+        <div class="text-xs font-mono text-accent tracking-widest mb-4">02 — TRAVAUX</div>
+        <h2 class="font-display text-4xl md:text-5xl leading-tight">Projets sélectionnés</h2>
+      </div>
+      <a href="https://github.com/Alchim-IA" class="btn-ghost hidden md:inline-flex">
+        Tous sur GitHub →
+      </a>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <!-- Phonon -->
+      <a href="/projects/phonon" class="project-card group relative block rounded-2xl border border-line bg-bg-elev p-8 overflow-hidden">
+        <svg class="ring-overlay absolute -top-10 -right-10 w-48 h-48 text-accent" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1">
+          <path d="M 100 10 a 90 90 0 1 1 0 180 a 90 90 0 1 1 0 -180"/>
+        </svg>
+        <div class="flex items-center gap-2 mb-6">
+          <span class="text-xs font-mono text-accent/70">DESKTOP</span>
+          <span class="w-1 h-1 rounded-full bg-ink-muted"></span>
+          <span class="text-xs font-mono text-ink-muted">v1.2</span>
+        </div>
+        <h3 class="font-display text-3xl mb-3">Phonon</h3>
+        <p class="text-ink-muted leading-relaxed mb-6">
+          Dictée vocale avec transcription temps réel, 99 langues, IA locale ou cloud au choix.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <span class="text-xs font-mono px-2 py-1 rounded border border-line text-ink-muted">whisper</span>
+          <span class="text-xs font-mono px-2 py-1 rounded border border-line text-ink-muted">tauri</span>
+          <span class="text-xs font-mono px-2 py-1 rounded border border-line text-ink-muted">rust</span>
+        </div>
+      </a>
+
+      <!-- Photon -->
+      <a href="/projects/photon" class="project-card group relative block rounded-2xl border border-line bg-bg-elev p-8 overflow-hidden">
+        <svg class="ring-overlay absolute -top-10 -right-10 w-48 h-48 text-accent" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1">
+          <path d="M 100 10 a 90 90 0 1 1 0 180 a 90 90 0 1 1 0 -180"/>
+        </svg>
+        <div class="flex items-center gap-2 mb-6">
+          <span class="text-xs font-mono text-accent/70">DESKTOP</span>
+          <span class="w-1 h-1 rounded-full bg-ink-muted"></span>
+          <span class="text-xs font-mono text-ink-muted">v2.0</span>
+        </div>
+        <h3 class="font-display text-3xl mb-3">Photon</h3>
+        <p class="text-ink-muted leading-relaxed mb-6">
+          Scanner de documents intelligent avec OCR 50+ langues, chiffrement AES-256 côté client.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <span class="text-xs font-mono px-2 py-1 rounded border border-line text-ink-muted">tauri</span>
+          <span class="text-xs font-mono px-2 py-1 rounded border border-line text-ink-muted">tesseract</span>
+          <span class="text-xs font-mono px-2 py-1 rounded border border-line text-ink-muted">rust</span>
+        </div>
+      </a>
+
+      <!-- Pulsion -->
+      <a href="/projects/pulsion" class="project-card group relative block rounded-2xl border border-line bg-bg-elev p-8 overflow-hidden">
+        <svg class="ring-overlay absolute -top-10 -right-10 w-48 h-48 text-accent" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1">
+          <path d="M 100 10 a 90 90 0 1 1 0 180 a 90 90 0 1 1 0 -180"/>
+        </svg>
+        <div class="flex items-center gap-2 mb-6">
+          <span class="text-xs font-mono text-accent/70">DESKTOP</span>
+          <span class="w-1 h-1 rounded-full bg-ink-muted"></span>
+          <span class="text-xs font-mono text-ink-muted">beta</span>
+        </div>
+        <h3 class="font-display text-3xl mb-3">Pulsion</h3>
+        <p class="text-ink-muted leading-relaxed mb-6">
+          Studio podcast assisté par IA — effets DSP, multi-pistes, publication multi-plateformes.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <span class="text-xs font-mono px-2 py-1 rounded border border-line text-ink-muted">electron</span>
+          <span class="text-xs font-mono px-2 py-1 rounded border border-line text-ink-muted">webaudio</span>
+          <span class="text-xs font-mono px-2 py-1 rounded border border-line text-ink-muted">groq</span>
+        </div>
+      </a>
+
+      <!-- MGQ + Hoofs (split card) -->
+      <div class="grid grid-cols-1 gap-6">
+        <a href="/projects/mgq" class="project-card relative block rounded-2xl border border-line bg-bg-elev p-6 overflow-hidden">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs font-mono text-accent/70">WEB</span>
+          </div>
+          <h3 class="font-display text-2xl mb-2">MGQ</h3>
+          <p class="text-sm text-ink-muted">Jeu éducatif de maths avec mécaniques gacha. 100+ niveaux.</p>
+        </a>
+        <a href="/projects/hoofs" class="project-card relative block rounded-2xl border border-line bg-bg-elev p-6 overflow-hidden">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs font-mono text-accent/70">WEB</span>
+          </div>
+          <h3 class="font-display text-2xl mb-2">Hoofs</h3>
+          <p class="text-sm text-ink-muted">Alertes de concours équestres avec notifications push temps réel.</p>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ STACK — snake-scale hex grid -->
+<section id="stack" class="py-24 section-veil">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-xs font-mono text-accent tracking-widest mb-4">04 — BOÎTE À OUTILS</div>
+    <h2 class="font-display text-4xl md:text-5xl leading-tight mb-4">
+      Chaque techno, <span class="italic text-accent">une écaille.</span>
+    </h2>
+    <p class="text-ink-muted text-lg max-w-2xl mb-16">
+      Comme les écailles d'un serpent qui protègent son corps, chaque outil joue son rôle —
+      choisi pour sa fiabilité, sa performance, et sa durabilité.
+    </p>
+
+    <!-- Hexagonal scale pattern — offset rows like reptile skin -->
+    <div class="scale-grid">
+      <!-- Row 1 — 5 scales -->
+      <div class="scale-row scale-row-1">
+        <div class="scale" data-category="lang">
+          <svg viewBox="0 0 100 115"><polygon points="50,4 94,29 94,86 50,111 6,86 6,29"/></svg>
+          <div class="scale-content">
+            <div class="scale-name">Rust</div>
+            <div class="scale-tag">natif</div>
+          </div>
+        </div>
+        <div class="scale" data-category="framework">
+          <svg viewBox="0 0 100 115"><polygon points="50,4 94,29 94,86 50,111 6,86 6,29"/></svg>
+          <div class="scale-content">
+            <div class="scale-name">Tauri</div>
+            <div class="scale-tag">desktop</div>
+          </div>
+        </div>
+        <div class="scale scale-highlight" data-category="framework">
+          <svg viewBox="0 0 100 115"><polygon points="50,4 94,29 94,86 50,111 6,86 6,29"/></svg>
+          <div class="scale-content">
+            <div class="scale-name">Next.js</div>
+            <div class="scale-tag">web</div>
+          </div>
+        </div>
+        <div class="scale" data-category="lang">
+          <svg viewBox="0 0 100 115"><polygon points="50,4 94,29 94,86 50,111 6,86 6,29"/></svg>
+          <div class="scale-content">
+            <div class="scale-name">TypeScript</div>
+            <div class="scale-tag">strict</div>
+          </div>
+        </div>
+        <div class="scale" data-category="framework">
+          <svg viewBox="0 0 100 115"><polygon points="50,4 94,29 94,86 50,111 6,86 6,29"/></svg>
+          <div class="scale-content">
+            <div class="scale-name">Tailwind</div>
+            <div class="scale-tag">CSS</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2 — 4 scales, offset -->
+      <div class="scale-row scale-row-2">
+        <div class="scale" data-category="data">
+          <svg viewBox="0 0 100 115"><polygon points="50,4 94,29 94,86 50,111 6,86 6,29"/></svg>
+          <div class="scale-content">
+            <div class="scale-name">Node.js</div>
+            <div class="scale-tag">backend</div>
+          </div>
+        </div>
+        <div class="scale" data-category="data">
+          <svg viewBox="0 0 100 115"><polygon points="50,4 94,29 94,86 50,111 6,86 6,29"/></svg>
+          <div class="scale-content">
+            <div class="scale-name">PostgreSQL</div>
+            <div class="scale-tag">données</div>
+          </div>
+        </div>
+        <div class="scale" data-category="data">
+          <svg viewBox="0 0 100 115"><polygon points="50,4 94,29 94,86 50,111 6,86 6,29"/></svg>
+          <div class="scale-content">
+            <div class="scale-name">SQLite</div>
+            <div class="scale-tag">embarqué</div>
+          </div>
+        </div>
+        <div class="scale" data-category="lang">
+          <svg viewBox="0 0 100 115"><polygon points="50,4 94,29 94,86 50,111 6,86 6,29"/></svg>
+          <div class="scale-content">
+            <div class="scale-name">Python</div>
+            <div class="scale-tag">scripts</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3 — 3 scales, aligned with row 1 but further offset -->
+      <div class="scale-row scale-row-3">
+        <div class="scale" data-category="framework">
+          <svg viewBox="0 0 100 115"><polygon points="50,4 94,29 94,86 50,111 6,86 6,29"/></svg>
+          <div class="scale-content">
+            <div class="scale-name">NestJS</div>
+            <div class="scale-tag">backend</div>
+          </div>
+        </div>
+        <div class="scale" data-category="ai">
+          <svg viewBox="0 0 100 115"><polygon points="50,4 94,29 94,86 50,111 6,86 6,29"/></svg>
+          <div class="scale-content">
+            <div class="scale-name">Groq</div>
+            <div class="scale-tag">IA cloud</div>
+          </div>
+        </div>
+        <div class="scale" data-category="ops">
+          <svg viewBox="0 0 100 115"><polygon points="50,4 94,29 94,86 50,111 6,86 6,29"/></svg>
+          <div class="scale-content">
+            <div class="scale-name">Git</div>
+            <div class="scale-tag">versioning</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ CONTACT -->
+<section id="contact" class="py-32 relative overflow-hidden section-veil-tint">
+  <div class="absolute inset-0 flex items-center justify-center opacity-[0.06] pointer-events-none">
+    <svg class="w-[600px] h-[600px] text-accent spin-slow" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <circle class="snake-body" cx="100" cy="100" r="68" stroke-width="18"/>
+      <circle cx="100" cy="100" r="78" stroke-width="1" opacity="0.5"/>
+      <circle cx="100" cy="100" r="58" stroke-width="1" opacity="0.5"/>
+      <path d="M 138 16 C 156 20, 160 40, 144 52 C 128 62, 108 58, 98 44 C 92 34, 98 20, 112 15 C 122 12, 132 13, 138 16 Z" fill="currentColor" stroke="none"/>
+    </svg>
+  </div>
+  <div class="relative z-10 max-w-3xl mx-auto px-6 text-center">
+    <div class="text-xs font-mono text-accent tracking-widest mb-4">04 — CONTACT</div>
+    <h2 class="font-display text-5xl md:text-6xl leading-tight mb-6">
+      Un projet <span class="italic">en tête&nbsp;?</span>
+    </h2>
+    <p class="text-ink-muted text-lg mb-10 max-w-xl mx-auto">
+      Toujours partant pour discuter d'IA, d'apps desktop, ou d'un outil open source à construire ensemble.
+    </p>
+    <a href="mailto:contact@cyprienbrisset.fr" class="btn-primary !text-base !py-4 !px-8">
+      contact@cyprienbrisset.fr
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- ============================================================ FOOTER -->
+<footer class="border-t border-line py-12 mt-16 section-veil">
+  <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-ink-muted">
+    <div class="flex items-center gap-3">
+      <img src="../public/logo.svg" alt="Ouroboros" class="w-10 h-10 object-contain" />
+      <span class="font-display">Cyprien Brisset</span>
+    </div>
+    <div class="flex items-center gap-6 font-mono text-xs">
+      <a href="https://github.com/Alchim-IA" class="hover:text-ink transition-colors">GitHub</a>
+      <a href="/legal" class="hover:text-ink transition-colors">Mentions légales</a>
+      <span>© 2026</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ============================================================ Three.js snake scene -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+const canvas = document.getElementById('hero-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+
+const scene = new THREE.Scene();
+
+// Camera — top-down, slight tilt
+const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
+camera.position.set(0, 7.2, 3.4);
+camera.lookAt(0, 0, 0);
+
+// ===== Lights =====
+scene.add(new THREE.AmbientLight(0x8aa394, 0.35));
+
+const key = new THREE.DirectionalLight(0xffffff, 1.35);
+key.position.set(4, 9, 4);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.camera.near = 1;
+key.shadow.camera.far = 25;
+key.shadow.camera.left = -6;
+key.shadow.camera.right = 6;
+key.shadow.camera.top = 6;
+key.shadow.camera.bottom = -6;
+key.shadow.radius = 4;
+key.shadow.bias = -0.0005;
+scene.add(key);
+
+const rim = new THREE.DirectionalLight(0x4ade80, 0.55);
+rim.position.set(-6, 3, -4);
+scene.add(rim);
+
+const fill = new THREE.DirectionalLight(0x6aa0d8, 0.18);
+fill.position.set(0, 2, -6);
+scene.add(fill);
+
+// ===== Procedural scale texture =====
+function makeScaleTexture(w = 1024, h = 512) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#4a5f36';
+  ctx.fillRect(0, 0, w, h);
+
+  const cols = 42, rows = 18;
+  const cw = w / cols;
+  const rh = h / rows;
+
+  for (let y = -1; y <= rows; y++) {
+    for (let x = -1; x <= cols; x++) {
+      const ox = x * cw + (y % 2 ? cw / 2 : 0);
+      const oy = y * rh;
+      const g = ctx.createRadialGradient(ox + cw/2, oy + rh/2, 0, ox + cw/2, oy + rh/2, cw * 0.75);
+      g.addColorStop(0, '#c4d89b');
+      g.addColorStop(0.45, '#8fa868');
+      g.addColorStop(0.85, '#4a5f36');
+      g.addColorStop(1, '#2a3a1e');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(ox + cw/2, oy + rh/2, cw * 0.58, rh * 0.58, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // tiny highlight
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.beginPath();
+      ctx.ellipse(ox + cw/2 - cw*0.12, oy + rh/2 - rh*0.18, cw*0.15, rh*0.1, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = 8;
+  return tex;
+}
+
+function makeBumpTexture(w = 1024, h = 512) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#808080';
+  ctx.fillRect(0, 0, w, h);
+  const cols = 42, rows = 18;
+  const cw = w / cols;
+  const rh = h / rows;
+  for (let y = -1; y <= rows; y++) {
+    for (let x = -1; x <= cols; x++) {
+      const ox = x * cw + (y % 2 ? cw / 2 : 0);
+      const oy = y * rh;
+      const g = ctx.createRadialGradient(ox + cw/2, oy + rh/2, 0, ox + cw/2, oy + rh/2, cw * 0.7);
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(0.7, '#808080');
+      g.addColorStop(1, '#202020');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(ox + cw/2, oy + rh/2, cw * 0.55, rh * 0.55, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+
+const diffuse = makeScaleTexture();
+const bump = makeBumpTexture();
+diffuse.repeat.set(6, 1.2);
+bump.repeat.set(6, 1.2);
+
+// ===== Snake: trefoil knot (p=2, q=3) =====
+const geom = new THREE.TorusKnotGeometry(1.35, 0.38, 480, 64, 2, 3);
+const mat = new THREE.MeshStandardMaterial({
+  map: diffuse,
+  bumpMap: bump,
+  bumpScale: 0.12,
+  roughness: 0.52,
+  metalness: 0.08,
+  color: 0xffffff,
+});
+
+// Inject a travelling sine-wave displacement into the vertex shader so
+// the tube itself undulates like a living snake muscle wave.
+mat.onBeforeCompile = (shader) => {
+  shader.uniforms.uTime = { value: 0 };
+  shader.vertexShader = shader.vertexShader
+    .replace(
+      '#include <common>',
+      `#include <common>
+       uniform float uTime;`
+    )
+    .replace(
+      '#include <begin_vertex>',
+      `vec3 transformed = vec3( position );
+       // uv.x = position along the tube length (0..1)
+       // Two overlapping waves at different frequencies for organic muscle motion
+       float wave  = sin(uv.x * 28.0 - uTime * 2.4) * 0.045;
+             wave += sin(uv.x * 11.0 - uTime * 1.3) * 0.020;
+       transformed += normal * wave;`
+    );
+  mat.userData.shader = shader;
+};
+const snake = new THREE.Mesh(geom, mat);
+snake.castShadow = true;
+snake.receiveShadow = true;
+scene.add(snake);
+
+// ===== Ground plane with soft shadow =====
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(30, 30),
+  new THREE.ShadowMaterial({ opacity: 0.55 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -0.75;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ===== Resize =====
+function resize() {
+  const parent = canvas.parentElement;
+  const w = parent.clientWidth;
+  const h = parent.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ===== Scroll-driven animation =====
+// The snake doesn't move with time — it moves with your scroll position.
+// Smoothed with a lerp so scroll jitter becomes fluid muscle undulation.
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Big snake in hero: gentle time-based motion, PAUSED when hero off-screen
+let heroVisible = true;
+const heroSection = document.querySelector('section.relative.min-h-\\[100svh\\]');
+if (heroSection && 'IntersectionObserver' in window) {
+  new IntersectionObserver(
+    ([entry]) => { heroVisible = entry.isIntersecting; },
+    { threshold: 0.01 }
+  ).observe(heroSection);
+}
+
+function tick(t) {
+  if (heroVisible && !reduceMotion) {
+    const u = (t * 0.00009) % 1;
+    diffuse.offset.x = -u;
+    bump.offset.x    = -u;
+    if (mat.userData.shader) {
+      mat.userData.shader.uniforms.uTime.value = t * 0.0009;
+    }
+    renderer.render(scene, camera);
+  }
+  requestAnimationFrame(tick);
+}
+
+// ===== Unified scroll rAF loop: parallax + mini snake animation =====
+// Single rAF loop that handles everything scroll-related → one paint per frame.
+const scrollSnake = document.getElementById('scroll-snake-body');
+const snakeBar    = document.querySelector('.scroll-snake');
+const snakePath   = document.getElementById('scroll-snake-path');
+
+// Parallax layers — strong depth contrast: far almost still, near very fast
+const parallaxLayers = [
+  { el: document.getElementById('jungle-far'),  speed: 0.03, mirror: false },
+  { el: document.getElementById('jungle-mid'),  speed: 0.16, mirror: false },
+  { el: document.getElementById('jungle-near'), speed: 0.42, mirror: false },
+];
+document.querySelectorAll('.vine').forEach((v) => {
+  const speed  = parseFloat(v.dataset.speed || '0.25');
+  const mirror = v.classList.contains('vine-mirror');
+  parallaxLayers.push({ el: v, speed, mirror });
+});
+
+// Static mini snake — only translates down the track with scroll, no morphing.
+let lastScrollY = window.scrollY;
+
+function animateScrollSnake() {
+  const curY  = window.scrollY;
+  const delta = curY - lastScrollY;
+  lastScrollY = curY;
+
+  // ===== PARALLAX — only update DOM when scroll actually changed =====
+  if (delta !== 0) {
+    for (let i = 0; i < parallaxLayers.length; i++) {
+      const l = parallaxLayers[i];
+      const y = (-curY * l.speed).toFixed(1);
+      l.el.style.transform = l.mirror
+        ? `translate3d(0, ${y}px, 0) scaleX(-1)`
+        : `translate3d(0, ${y}px, 0)`;
+    }
+
+    // ===== Scroll-snake: static body, just translates =====
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const progress  = maxScroll > 0 ? curY / maxScroll : 0;
+    const trackH    = snakeBar.clientHeight - 56;
+    const y         = (progress * trackH).toFixed(1);
+    scrollSnake.style.transform = `translate(-50%, ${y}px)`;
+  }
+
+  requestAnimationFrame(animateScrollSnake);
+}
+requestAnimationFrame(animateScrollSnake);
+requestAnimationFrame(tick);
+</script>
+
+</body>
+</html>
