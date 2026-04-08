@@ -1,9 +1,6 @@
 import type { MetadataRoute } from "next";
 import { projects } from "@/content/projects";
 
-// Required when using `output: "export"` (static HTML export)
-export const dynamic = "force-static";
-
 const SITE_URL = "https://brisset.me";
 
 export default function sitemap(): MetadataRoute.Sitemap {

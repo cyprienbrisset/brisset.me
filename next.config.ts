@@ -1,15 +1,17 @@
 import type { NextConfig } from "next";
 
+/**
+ * Deployed via Coolify + Nixpacks (Node SSR).
+ * Nixpacks auto-detects Next.js and runs `pnpm build` + `pnpm start`.
+ * No static export — we keep full SSR + ISR + image optimization.
+ */
 const config: NextConfig = {
-  output: "export", // Static export — works on OVH static hosting
+  reactStrictMode: true,
   images: {
-    unoptimized: true, // Required with output: 'export'
     remotePatterns: [
       { protocol: "https", hostname: "raw.githubusercontent.com" },
     ],
   },
-  reactStrictMode: true,
-  trailingSlash: true, // Better for static hosts
   experimental: {
     optimizePackageImports: ["@react-three/drei", "@react-three/fiber"],
   },
