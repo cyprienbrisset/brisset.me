@@ -154,6 +154,7 @@ export function HeroSnake() {
   // Saves ~99% of GPU time when scrolled past the first viewport.
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(true);
+  const [prefersReduced, setPrefersReduced] = useState(false);
 
   useEffect(() => {
     const el = wrapperRef.current;
@@ -163,16 +164,31 @@ export function HeroSnake() {
       { threshold: 0.01 },
     );
     obs.observe(el);
+
+    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (mq) {
+      setPrefersReduced(mq.matches);
+      const onChange = (e: MediaQueryListEvent) => setPrefersReduced(e.matches);
+      mq.addEventListener?.("change", onChange);
+      return () => {
+        obs.disconnect();
+        mq.removeEventListener?.("change", onChange);
+      };
+    }
+
     return () => obs.disconnect();
   }, []);
 
-  // Respect prefers-reduced-motion at module level — render once then freeze.
-  const prefersReduced =
-    typeof window !== "undefined" &&
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-
   return (
-    <div ref={wrapperRef} className="absolute inset-0">
+    <div
+      ref={wrapperRef}
+      className="absolute inset-0"
+      // CRITICAL: stops the canvas from intercepting any pointer event.
+      // Without this, R3F raycasts against the geometry on every pointermove,
+      // wrecking INP (568ms → ~5ms in tests). The snake is decorative, so we
+      // never need clicks/hovers on it.
+      style={{ pointerEvents: "none" }}
+    >
       <Canvas
         className="hero-canvas"
         shadows
@@ -186,6 +202,9 @@ export function HeroSnake() {
           toneMappingExposure: 1.05,
         }}
         frameloop={isVisible && !prefersReduced ? "always" : "never"}
+        // Disable R3F's event system entirely — extra safety on top of the
+        // CSS pointer-events: none above. No raycaster work ever happens.
+        events={undefined}
       >
         <ambientLight intensity={0.35} color={0x8aa394} />
         <directionalLight
