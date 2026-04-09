@@ -1,6 +1,6 @@
 "use client";
 
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
@@ -86,6 +86,38 @@ function makeBumpTexture(w = 1024, h = 512) {
   const tex = new THREE.CanvasTexture(c);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   return tex;
+}
+
+/**
+ * Adjusts camera FOV & position so the snake fills the viewport
+ * regardless of aspect ratio. Portrait screens get a wider FOV
+ * to prevent the knot from being cropped on the sides.
+ */
+function ResponsiveCamera() {
+  const { camera, size } = useThree();
+  useEffect(() => {
+    const cam = camera as THREE.PerspectiveCamera;
+    const aspect = size.width / size.height;
+
+    if (aspect < 0.65) {
+      // Very narrow (tall phones in portrait)
+      cam.fov = 52;
+      cam.position.set(0, 8.5, 5);
+    } else if (aspect < 1) {
+      // Portrait tablets / larger phones
+      const t = (aspect - 0.65) / 0.35; // 0..1
+      cam.fov = 52 - t * 14; // 52 → 38
+      cam.position.set(0, 8.5 - t * 1.3, 5 - t * 1.6); // → [0, 7.2, 3.4]
+    } else {
+      // Landscape / desktop
+      cam.fov = 32;
+      cam.position.set(0, 7.2, 3.4);
+    }
+
+    cam.updateProjectionMatrix();
+  }, [camera, size]);
+
+  return null;
 }
 
 function Snake() {
@@ -206,6 +238,7 @@ export function HeroSnake() {
         // CSS pointer-events: none above. No raycaster work ever happens.
         events={undefined}
       >
+        <ResponsiveCamera />
         <ambientLight intensity={0.35} color={0x8aa394} />
         <directionalLight
           position={[4, 9, 4]}
