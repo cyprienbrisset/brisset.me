@@ -309,6 +309,13 @@ section[id] { scroll-margin-top: 80px; }
   .scale-name { font-size: 0.72rem; }
   .scale-tag  { font-size: 0.5rem; }
 }
+@media (max-width: 480px) {
+  .scale { width: 62px; height: 72px; }
+  .scale-row { gap: 6px; margin-top: -12px; }
+  .scale-name { font-size: 0.58rem; }
+  .scale-tag  { font-size: 0.42rem; }
+  .scale-content { padding: 0 4px; }
+}
 
 /* ============================================================
    Project pages — screen frame & utilities
